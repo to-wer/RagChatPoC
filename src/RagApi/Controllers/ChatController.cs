@@ -2,7 +2,6 @@ using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using RagApi.Models;
-using RagApi.Services;
 using RagApi.Services.Interfaces;
 
 namespace RagApi.Controllers;
@@ -18,7 +17,7 @@ public class ChatController(IRagChatService ragChatService,
     [HttpPost("completions")]
     public async Task<IActionResult> PostChatCompletion([FromBody] ChatCompletionRequest request)
     {
-        if (request.Stream == true)
+        if (request.Stream)
         {
             Response.StatusCode = 200;
             Response.ContentType = "text/event-stream";
@@ -44,7 +43,6 @@ public class ChatController(IRagChatService ragChatService,
                         }
                     }
                 };
-                //var json = JsonSerializer.Serialize(new { content = chunk });
                 var json = JsonSerializer.Serialize(chunk);
                 
                 await Response.WriteAsync($"data: {json}\n\n");
@@ -56,10 +54,8 @@ public class ChatController(IRagChatService ragChatService,
             await Response.Body.FlushAsync();
             return new EmptyResult();
         }
-        else
-        {
-            var result = await ragChatService.GetCompletionAsync(request);
-            return Ok(result);
-        }
+
+        var result = await ragChatService.GetCompletionAsync(request);
+        return Ok(result);
     }
 }
