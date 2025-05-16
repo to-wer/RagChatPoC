@@ -8,7 +8,6 @@ namespace RagApi.Services;
 
 public class RagChatService(
     IDocumentChunkRepository documentChunkRepository,
-    IChatService chatService,
     IEmbeddingService embeddingService,
     HttpClient httpClient,
     ILogger<RagChatService> logger) : IRagChatService
@@ -20,8 +19,6 @@ public class RagChatService(
         if (ollamaRequest == null)
             return new ChatCompletionResponse();
         
-        //using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "http://localhost:11434/api/chat");
-        
         var response = await httpClient.PostAsync("http://localhost:11434/api/chat",
             new StringContent(JsonSerializer.Serialize(ollamaRequest), Encoding.UTF8, "application/json"));
 
@@ -31,19 +28,19 @@ public class RagChatService(
 
         return new ChatCompletionResponse()
         {
-            Choices = new()
-            {
-                new ChatChoice()
+            Choices =
+            [
+                new ChatChoice
                 {
                     Index = 0,
                     Message = new ChatMessage
                     {
                         Role = "assistant",
-                        Content = ollamaChatResponse?.Message?.Content ?? string.Empty
-                    },
+                        Content = ollamaChatResponse?.Message.Content ?? string.Empty
+                    }
                 }
-            },
-            Model = request.Model
+            ],
+            Model = ollamaChatResponse?.Model ?? string.Empty
         };
     }
 
@@ -61,7 +58,7 @@ public class RagChatService(
 
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        await using var stream = await response.Content.ReadAsStreamAsync();
         using var reader = new StreamReader(stream);
 
         while (!reader.EndOfStream)
