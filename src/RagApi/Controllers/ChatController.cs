@@ -8,7 +8,7 @@ using RagApi.Services.Interfaces;
 namespace RagApi.Controllers;
 
 [ApiController]
-[Route("api/v{v:apiVersion}/[controller]")]
+[Route("v{v:apiVersion}/[controller]")]
 [ApiVersion(1)]
 public class ChatController(IRagChatService ragChatService, 
     ILogger<ChatController> logger) : ControllerBase
