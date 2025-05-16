@@ -3,6 +3,7 @@ using System.Text.Json;
 using RagApi.Models;
 using RagApi.Repositories;
 using RagApi.Services.Interfaces;
+using RagApi.Utils;
 
 namespace RagApi.Services;
 
@@ -10,13 +11,13 @@ public class RagChatService(
     IDocumentChunkRepository documentChunkRepository,
     IChatService chatService,
     IEmbeddingService embeddingService,
-    HttpClient httpClient) : IRagChatService
+    HttpClient httpClient,
+    ILogger<RagChatService> logger) : IRagChatService
 {
     public async Task<ChatCompletionResponse> GetCompletionAsync(ChatCompletionRequest request)
     {
         var lastUserMessage = request.Messages
-            .Where(m => m.Role == "user")
-            .LastOrDefault();
+            .LastOrDefault(m => m.Role == "user");
 
         if (lastUserMessage == null)
             throw new ArgumentException("No user message found.");
@@ -55,11 +56,36 @@ public class RagChatService(
 
     public async IAsyncEnumerable<string> GetStreamingCompletionAsync(ChatCompletionRequest request)
     {
+        var lastUserMessage = request.Messages
+            .LastOrDefault(m => m.Role == "user");
+
+        if (lastUserMessage == null)
+            yield break;
+        
+        var questionEmbedding = await embeddingService.GetEmbeddingAsync(lastUserMessage.Content);
+        var relevantChunks = await documentChunkRepository.GetRelevantChunks(questionEmbedding);
+        
+        var context = string.Join("\n---\n", relevantChunks.Select(c => c.ChunkText));
+
+        var systemPrompt = $"""
+                                You are a helpful assistant. Use the following context to answer the user's question.
+
+                                Context:
+                                {context}
+                            """;
+
+        // Neue Nachrichtenliste mit Kontext als System-Nachricht
+        var newMessages = new List<ChatMessage>
+        {
+            new ChatMessage { Role = "system", Content = systemPrompt }
+        };
+        newMessages.AddRange(request.Messages);
+        
         var ollamaRequest = new
         {
             model = request.Model ?? "llama3.2",
             stream = true,
-            messages = request.Messages.Select(m => new
+            messages = newMessages.Select(m => new
             {
                 role = m.Role.ToLowerInvariant(),
                 content = m.Content
@@ -91,13 +117,16 @@ public class RagChatService(
                 var json = JsonSerializer.Deserialize<OllamaChatStreamChunk>(line);
                 content = json?.Message?.Content;
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
+                logger.LogWarning("Failed to deserialize JSON: {Message}", ex.Message);
                 // Ignore malformed chunks
             }
 
             if (!string.IsNullOrEmpty(content))
+            {
                 yield return content;
+            }
         }
     }
 

@@ -10,7 +10,8 @@ namespace RagApi.Controllers;
 [ApiController]
 [Route("api/v{v:apiVersion}/[controller]")]
 [ApiVersion(1)]
-public class ChatController(IRagChatService ragChatService) : ControllerBase
+public class ChatController(IRagChatService ragChatService, 
+    ILogger<ChatController> logger) : ControllerBase
 {
  
     [MapToApiVersion(1)]
@@ -26,6 +27,7 @@ public class ChatController(IRagChatService ragChatService) : ControllerBase
 
             await foreach (var token in ragChatService.GetStreamingCompletionAsync(request))
             {
+                logger.LogInformation("Generated token: {Token}", token);
                 var chunk = new
                 {
                     id = "chatcmpl-" + Guid.NewGuid().ToString("N"),
@@ -42,7 +44,9 @@ public class ChatController(IRagChatService ragChatService) : ControllerBase
                         }
                     }
                 };
-                var json = JsonSerializer.Serialize(new { content = chunk });
+                //var json = JsonSerializer.Serialize(new { content = chunk });
+                var json = JsonSerializer.Serialize(chunk);
+                
                 await Response.WriteAsync($"data: {json}\n\n");
                 await Response.Body.FlushAsync();
             }
