@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using RagApi.Models;
 using RagApi.Services.Interfaces;
+using RagApi.Utils;
 
 namespace RagApi.Services;
 
@@ -9,11 +11,8 @@ public class ChatService(IConfiguration configuration, HttpClient httpClient) : 
 {
     public async Task<string?> GetAnswerAsync(string question, string context)
     {
-        var prompt = $"Beantworte die folgende Frage basierend auf dem gegebenen Kontext.\n\n" +
-                     $"Kontext:\n{context}\n\n" +
-                     $"Frage:\n{question}\n\n" +
-                     $"Antwort:";
-
+        var prompt = PromptBuilder.Build(question, context);
+        
         return await GetAnswerAsync(prompt);
     }
 
@@ -25,6 +24,11 @@ public class ChatService(IConfiguration configuration, HttpClient httpClient) : 
         }
 
         return await GetOllamaAnswerAsync(prompt);;
+    }
+
+    public IAsyncEnumerable<string> GetStreamingCompletionAsync(string prompt)
+    {
+        throw new NotImplementedException();
     }
 
     private async Task<string?> GetOpenAiAnswerAsync(string prompt)

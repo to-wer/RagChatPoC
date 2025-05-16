@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using RagApi.Data;
 using RagApi.Repositories;
@@ -26,10 +27,26 @@ public class Program
         builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
         builder.Services.AddScoped<IIndexService, IndexService>();
         builder.Services.AddScoped<IChatService, ChatService>();
+        builder.Services.AddScoped<IRagChatService, RagChatService>();
         
         // Add services to the container.
         builder.Services.AddAuthorization();
 
+        builder.Services
+            .AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1);
+                options.ReportApiVersions = true;
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddMvc()
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'V";
+                options.SubstituteApiVersionInUrl = true;
+            });
+        
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
 

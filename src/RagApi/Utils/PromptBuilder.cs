@@ -5,6 +5,24 @@ namespace RagApi.Utils;
 
 public static class PromptBuilder
 {
+    public static string Build(string question, string context)
+    {
+        var sb = new StringBuilder();
+        
+        sb.AppendLine("You are an AI assistant helping the user based on uploaded documents.");
+        sb.AppendLine();
+        
+        sb.AppendLine();
+        sb.AppendLine("Context:");
+        sb.AppendLine(context);
+        
+        sb.AppendLine();
+        sb.AppendLine($"User: {question}");
+        sb.Append("Assistant:");
+        
+        return sb.ToString();
+    }
+    
     public static string Build(List<ChatMessage> history, List<DocumentChunk> chunks, string newQuestion)
     {
         var sb = new StringBuilder();

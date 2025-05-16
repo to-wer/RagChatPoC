@@ -1,88 +1,61 @@
+using System.Text.Json;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using RagApi.Data;
-using RagApi.Repositories;
+using RagApi.Models;
+using RagApi.Services;
 using RagApi.Services.Interfaces;
-using RagApi.Utils;
 
 namespace RagApi.Controllers;
 
 [ApiController]
-[Route("api/chat")]
-public class ChatController(IChatSessionRepository chatSessionRepository,
-    IChatMessagesRepository chatMessagesRepository,
-    IEmbeddingService embeddingService,
-    IDocumentChunkRepository documentChunkRepository,
-    IChatService chatService) : ControllerBase
+[Route("api/v{v:apiVersion}/[controller]")]
+[ApiVersion(1)]
+public class ChatController(IRagChatService ragChatService) : ControllerBase
 {
-    [HttpPost("sessions")]
-    public async Task<IActionResult> StartNewSession()
+ 
+    [MapToApiVersion(1)]
+    [HttpPost("completions")]
+    public async Task<IActionResult> PostChatCompletion([FromBody] ChatCompletionRequest request)
     {
-        var sessionId = await chatSessionRepository.StartNewSession(string.Empty);
-        return Ok(sessionId);
-    }
-
-    [HttpGet("sessions")]
-    public async Task<IActionResult> GetSessions()
-    {
-        var sessions = await chatSessionRepository.GetAllSessions();
-        return Ok(sessions);
-    }
-    
-    [HttpGet("sessions/{id:guid}")]
-    public async Task<ActionResult<ChatSession>> GetSession(Guid id)
-    {
-        var session = await chatSessionRepository.GetSession(id);
-        return session == null ? NotFound() : Ok(session);
-    }
-
-    [HttpPost("sessions/{sessionId:guid}/messages")]
-    public async Task<IActionResult> SendMessage(Guid sessionId, [FromBody] string message)
-    {
-        var session = await chatSessionRepository.GetSession(sessionId);
-        if (session == null)
+        if (request.Stream == true)
         {
-            return NotFound();
+            Response.StatusCode = 200;
+            Response.ContentType = "text/event-stream";
+            Response.Headers["Cache-Control"] = "no-cache";
+            Response.Headers["X-Accel-Buffering"] = "no"; // Für NGINX (deaktiviert Pufferung)
+
+            await foreach (var token in ragChatService.GetStreamingCompletionAsync(request))
+            {
+                var chunk = new
+                {
+                    id = "chatcmpl-" + Guid.NewGuid().ToString("N"),
+                    @object = "chat.completion.chunk",
+                    created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    model = $"ollama-{request.Model}",
+                    choices = new[]
+                    {
+                        new
+                        {
+                            delta = new { content = token },
+                            index = 0,
+                            finish_reason = (string?)null
+                        }
+                    }
+                };
+                var json = JsonSerializer.Serialize(new { content = chunk });
+                await Response.WriteAsync($"data: {json}\n\n");
+                await Response.Body.FlushAsync();
+            }
+
+            // Optional: Abschluss-Event senden
+            await Response.WriteAsync("data: [DONE]\n\n");
+            await Response.Body.FlushAsync();
+            return new EmptyResult();
         }
-
-        var userMessage = new ChatMessage()
+        else
         {
-            SessionId = sessionId,
-            IsUser = true,
-            Content = message,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await chatMessagesRepository.AddMessage(userMessage);
-        
-        var history = await chatMessagesRepository.GetChatHistory(sessionId, 5);
-        
-        var embedding = await embeddingService.GetEmbeddingAsync(message);
-
-        var topChunks = await documentChunkRepository.GetRelevantChunks(embedding);
-        
-        var prompt = PromptBuilder.Build(history.ToList(), topChunks, message);
-        
-        var response = await chatService.GetAnswerAsync(prompt);
-        
-        var assistantMessage = new ChatMessage
-        {
-            SessionId = sessionId,
-            IsUser = false,
-            Content = response
-        };
-        await chatMessagesRepository.AddMessage(assistantMessage);
-        return Ok(assistantMessage);
-    }
-
-    [HttpGet("sessions/{sessionId:guid}/messages")]
-    public async Task<IActionResult> GetMessages(Guid sessionId)
-    {
-        var session = await chatSessionRepository.GetSession(sessionId);
-        if (session == null)
-        {
-            return NotFound();
+            var result = await ragChatService.GetCompletionAsync(request);
+            return Ok(result);
         }
-        var messages = await chatMessagesRepository.GetAllMessages(sessionId);
-        return Ok(messages);
     }
 }
