@@ -67,15 +67,15 @@ jobs:
         run: |
           dotnet tool install --global dotnet-coverage
 
-      - name: Start SonarQube Analysis
-        #if: github.ref == 'refs/heads/main'
-        run: |
-          dotnet-sonarscanner begin /k:"to-wer_RagChatPoC" \
-            /o:"torsten-werner" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
-        working-directory: src
+#      - name: Start SonarQube Analysis
+#        #if: github.ref == 'refs/heads/main'
+#        run: |
+#          dotnet-sonarscanner begin /k:"to-wer_RagChatPoC" \
+#            /o:"torsten-werner" \
+#            /d:sonar.host.url="https://sonarcloud.io" \
+#            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+#            /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+#        working-directory: src
 
       - name: Restore dependencies
         run: dotnet restore
@@ -89,10 +89,10 @@ jobs:
         run: dotnet-coverage collect "dotnet test --no-build --configuration Release" -f xml -o "coverage.xml"
         working-directory: src
 
-      - name: Complete SonarQube Analysis
-        #        if: github.ref == 'refs/heads/main'
-        run: dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-        working-directory: src
+#      - name: Complete SonarQube Analysis
+#        #        if: github.ref == 'refs/heads/main'
+#        run: dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+#        working-directory: src
       
       - name: Publish API
         run: dotnet publish RagChatPoC.Api/RagChatPoC.Api.csproj --configuration Release
