@@ -18,7 +18,10 @@ public class Program
         builder.Services.AddDbContext<RagDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        builder.Services.AddHttpClient();
+        builder.Services.AddHttpClient("OllamaClient", client =>
+        {
+            client.BaseAddress = new Uri(builder.Configuration["OLLAMA_HOST"] ?? string.Empty);
+        });
         
         builder.Services.AddScoped<IDocumentChunkRepository, DocumentChunkRepository>();
         builder.Services.AddScoped<IChatSessionRepository, ChatSessionRepository>();

@@ -10,9 +10,11 @@ namespace RagChatPoC.Api.Services;
 public class RagChatService(
     IDocumentChunkRepository documentChunkRepository,
     IEmbeddingService embeddingService,
-    HttpClient httpClient,
+    IHttpClientFactory httpClientFactory,
     ILogger<RagChatService> logger) : IRagChatService
 {
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("OllamaClient");
+    
     public async Task<ChatCompletionResponse> GetCompletionAsync(ChatCompletionRequest request)
     {
         var ollamaRequest = await CreateOllamaChatRequest(request);
@@ -20,7 +22,7 @@ public class RagChatService(
         if (ollamaRequest == null)
             return new ChatCompletionResponse();
 
-        var response = await httpClient.PostAsync("http://localhost:11434/api/chat",
+        var response = await _httpClient.PostAsync("api/chat",
             new StringContent(JsonSerializer.Serialize(ollamaRequest), Encoding.UTF8, "application/json"));
 
         response.EnsureSuccessStatusCode();
@@ -52,10 +54,10 @@ public class RagChatService(
             yield break;
 
         var requestJson = JsonSerializer.Serialize(ollamaRequest);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "http://localhost:11434/api/chat");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/chat");
         httpRequest.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
-        using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+        using var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
 
         response.EnsureSuccessStatusCode();
 

@@ -16,7 +16,7 @@ public class Program
         
         builder.Services.AddHttpClient("RagChatPoC.Api", client =>
         {
-            client.BaseAddress = new Uri("http://localhost:5240");
+            client.BaseAddress = new Uri(builder.Configuration["RAGCHAT_API_BASEURL"] ?? string.Empty);
         });
 
         builder.Services.AddScoped<ChatViewModel>();

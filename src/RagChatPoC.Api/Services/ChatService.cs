@@ -3,12 +3,14 @@ using System.Text;
 using System.Text.Json;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Api.Utils;
-using RagChatPoC.Api.Models;
 
 namespace RagChatPoC.Api.Services;
 
-public class ChatService(IConfiguration configuration, HttpClient httpClient) : IChatService
+public class ChatService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    : IChatService
 {
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("OllamaClient");
+
     public async Task<string?> GetAnswerAsync(string question, string context)
     {
         var prompt = PromptBuilder.Build(question, context);
@@ -46,7 +48,7 @@ public class ChatService(IConfiguration configuration, HttpClient httpClient) : 
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", configuration["OpenAi:ApiKey"]);
         req.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-        var res = await httpClient.SendAsync(req);
+        var res = await _httpClient.SendAsync(req);
         var json = await res.Content.ReadAsStringAsync();
 
         var parsed = JsonDocument.Parse(json);
@@ -66,7 +68,7 @@ public class ChatService(IConfiguration configuration, HttpClient httpClient) : 
             stream = false
         };
 
-        var res = await httpClient.PostAsync("http://localhost:11434/api/generate",
+        var res = await _httpClient.PostAsync("api/generate",
             new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
 
         var content = await res.Content.ReadAsStringAsync();
