@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleRagTool", "SimpleRagTool\SimpleRagTool.csproj", "{E6C34ABD-9F52-4441-81C3-A2DEC6D7E19E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagApi", "RagApi\RagApi.csproj", "{AA64642E-41F0-4745-8027-4EBF483DD194}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagChatPoC.Api", "RagChatPoC.Api\RagChatPoC.Api.csproj", "{AA64642E-41F0-4745-8027-4EBF483DD194}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
