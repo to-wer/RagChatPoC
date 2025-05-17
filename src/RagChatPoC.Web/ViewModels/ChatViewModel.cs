@@ -13,6 +13,7 @@ public class ChatViewModel
     public bool IsBusy { get; private set; }
     public string Model { get; set; } = "llama3.2";
     public bool UseStreaming { get; set; } = true;
+    public bool IsStreaming { get; private set; }
     
     public event Action? OnNewToken;
 
@@ -37,20 +38,25 @@ public class ChatViewModel
         Messages.Add(userMessage);
         CurrentMessage = string.Empty;
 
-        IsBusy = true;
-
         if (UseStreaming)
         {
+            IsStreaming = true;
+            IsBusy = true;
+
             _logger.LogDebug("Using streaming for response");
             var lastAssistant = new ChatMessage { Role = "assistant", Content = string.Empty };
             Messages.Add(lastAssistant);
             await foreach (var chunk in StreamChatResponseAsync())
             {
+                if (IsBusy) IsBusy = false;
                 AppendOrUpdateAssistantMessage(chunk);
             }
+            IsStreaming = false;
+            OnNewToken?.Invoke();
         }
         else
         {
+            IsBusy = true;
             var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", new ChatCompletionRequest
             {
                 Model = Model,
@@ -63,9 +69,10 @@ public class ChatViewModel
             {
                 Messages.Add(assistantMessage);
             }
+        IsBusy = false;
+            
         }
 
-        IsBusy = false;
     }
 
     private void AppendOrUpdateAssistantMessage(string chunk)

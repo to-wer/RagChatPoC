@@ -12,7 +12,12 @@
     {
         <div class="@message.Role.ToLower()" style="white-space: pre-wrap;">
             <strong>@message.Role:</strong>
-            <span class="animated-text">@message.Content</span>
+            <span class="animated-text">@message.Content
+                @if (ViewModel.IsStreaming && message == ViewModel.Messages.LastOrDefault(m => m.Role == "assistant"))
+                {
+                    <span class="blinking-caret">█</span>
+                }
+                </span>
         </div>
     }
     @if (ViewModel.IsBusy)
