@@ -66,6 +66,12 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
+        
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<RagDbContext>();
+            dbContext.Database.Migrate(); // Applies pending migrations
+        }
 
         app.Run();
     }
