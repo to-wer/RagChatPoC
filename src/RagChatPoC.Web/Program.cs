@@ -1,4 +1,5 @@
 using RagChatPoC.Web.Components;
+using RagChatPoC.Web.ViewModels;
 
 namespace RagChatPoC.Web;
 
@@ -12,6 +13,13 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents()
             .AddInteractiveWebAssemblyComponents();
+        
+        builder.Services.AddHttpClient("RagChatPoC.Api", client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:5240");
+        });
+
+        builder.Services.AddScoped<ChatViewModel>();
 
         var app = builder.Build();
 

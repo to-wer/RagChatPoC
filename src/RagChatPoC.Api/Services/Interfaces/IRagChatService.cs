@@ -1,4 +1,4 @@
-using RagChatPoC.Api.Models;
+using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.Services.Interfaces;
 

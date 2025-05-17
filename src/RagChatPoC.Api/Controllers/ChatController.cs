@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Services.Interfaces;
+using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.Controllers;
 

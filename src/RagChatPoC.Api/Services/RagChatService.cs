@@ -3,6 +3,7 @@ using System.Text.Json;
 using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services.Interfaces;
+using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.Services;
 
