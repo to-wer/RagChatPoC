@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using RagChatPoC.Web.ViewModels
 @inject ChatViewModel ViewModel
+@inject ILogger<Home> Logger
 
 <PageTitle>Home</PageTitle>
 
@@ -33,6 +34,7 @@
 
     private async Task OnSendAsync()
     {
+        Logger.LogInformation("OnSendAsync");
         await ViewModel.SendMessageAsync();
         StateHasChanged(); // manuell nötig bei Streaming
     }

@@ -4,16 +4,27 @@ using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Web.ViewModels;
 
-public class ChatViewModel(HttpClient httpClient)
+public class ChatViewModel
 {
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<ChatViewModel> _logger;
     public List<ChatMessage> Messages { get; set; } = new();
     public string CurrentMessage { get; set; } = string.Empty;
     public bool IsBusy { get; private set; }
     public string Model { get; set; } = "llama3.2";
     public bool UseStreaming { get; set; } = true;
 
+    public ChatViewModel(IHttpClientFactory httpClientFactory,
+        ILogger<ChatViewModel> logger)
+    {
+        _httpClient = httpClientFactory.CreateClient("RagChatPoC.Api");
+        _logger = logger;
+    }
+
     public async Task SendMessageAsync()
     {
+        _logger.LogInformation("Sending message: {Message}", CurrentMessage);
+        
         if (string.IsNullOrWhiteSpace(CurrentMessage)) return;
 
         var userMessage = new ChatMessage
@@ -35,7 +46,7 @@ public class ChatViewModel(HttpClient httpClient)
         }
         else
         {
-            var response = await httpClient.PostAsJsonAsync("v1/chat/completions", new ChatCompletionRequest
+            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", new ChatCompletionRequest
             {
                 Model = Model,
                 Stream = false,
@@ -80,7 +91,7 @@ public class ChatViewModel(HttpClient httpClient)
             Content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json")
         };
 
-        var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+        var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
         var stream = await response.Content.ReadAsStreamAsync();
         using var reader = new StreamReader(stream);
 

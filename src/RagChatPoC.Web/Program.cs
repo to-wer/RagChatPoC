@@ -39,8 +39,7 @@ public class Program
 
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
-            .AddInteractiveServerRenderMode()
-            .AddInteractiveWebAssemblyRenderMode();
+            .AddInteractiveServerRenderMode();
 
         app.Run();
     }
