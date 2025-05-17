@@ -136,17 +136,8 @@ jobs:
 #          DIGEST: ${{ steps.build-and-push-web.outputs.digest }}
 #        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
-      - name: Check if package exists
-        run: |
-          API_PACKAGE="ragchatpoc/api"
-          if ! gh api repos/${{ github.repository }}/packages/docker/${{ API_PACKAGE }} >/dev/null 2>&1; then
-          echo "Package $API_PACKAGE does not exist, skipping cleanup..."
-          exit 0
-          fi
-
       - name: 'Clean up docker images api'
         uses: dataaxiom/ghcr-cleanup-action@v1
-        if: always() # This step will always run, even if the previous step fails
         with:
           dry-run: false
           keep-n-tagged: 10
