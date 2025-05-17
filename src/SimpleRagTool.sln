@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleRagTool", "SimpleRagT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagChatPoC.Api", "RagChatPoC.Api\RagChatPoC.Api.csproj", "{AA64642E-41F0-4745-8027-4EBF483DD194}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagChatPoC.Web", "RagChatPoC.Web\RagChatPoC.Web.csproj", "{DC06D81C-AB03-45D2-91CE-A1F7D26A4AB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagChatPoC.Domain", "RagChatPoC.Domain\RagChatPoC.Domain.csproj", "{CD1C8AF4-052C-4067-8278-8D90A568C019}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{AA64642E-41F0-4745-8027-4EBF483DD194}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA64642E-41F0-4745-8027-4EBF483DD194}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA64642E-41F0-4745-8027-4EBF483DD194}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC06D81C-AB03-45D2-91CE-A1F7D26A4AB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC06D81C-AB03-45D2-91CE-A1F7D26A4AB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC06D81C-AB03-45D2-91CE-A1F7D26A4AB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC06D81C-AB03-45D2-91CE-A1F7D26A4AB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD1C8AF4-052C-4067-8278-8D90A568C019}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD1C8AF4-052C-4067-8278-8D90A568C019}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD1C8AF4-052C-4067-8278-8D90A568C019}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD1C8AF4-052C-4067-8278-8D90A568C019}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

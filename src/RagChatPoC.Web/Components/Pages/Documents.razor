@@ -1,0 +1,82 @@
+@page "/documents"
+@using RagChatPoC.Domain.Models
+@inject IHttpClientFactory HttpClientFactory
+
+<h3>Dokumente verwalten</h3>
+
+<InputFile OnChange="OnFileSelected" multiple />
+@if (UploadStatus != null)
+{
+    <p>@UploadStatus</p>
+}
+
+@if (DocumentList == null)
+{
+    <p><em>Lade Dokumente...</em></p>
+}
+else if (DocumentList.Count == 0)
+{
+    <p><em>Keine Dokumente gefunden.</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Datei</th>
+                <th>Chunks</th>
+                <th>Hochgeladen</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in DocumentList)
+            {
+                <tr>
+                    <td>@doc.FileName</td>
+                    <td>@doc.ChunkCount</td>
+                    <td>@doc.CreatedAt?.ToLocalTime()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<DocumentDto>? DocumentList;
+    private string? UploadStatus;
+    private HttpClient _httpClient;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _httpClient = HttpClientFactory.CreateClient("RagChatPoC.Api");
+        await LoadDocumentsAsync();
+    }
+
+    private async Task LoadDocumentsAsync()
+    {
+        DocumentList = await _httpClient.GetFromJsonAsync<List<DocumentDto>>("api/documents");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        UploadStatus = "Wird hochgeladen...";
+        var content = new MultipartFormDataContent();
+
+        foreach (var file in e.GetMultipleFiles())
+        {
+            var stream = file.OpenReadStream(maxAllowedSize: 50_000_000); // z. B. 50 MB
+            content.Add(new StreamContent(stream), "file", file.Name);
+        }
+
+        var response = await _httpClient.PostAsync("api/documents", content);
+        if (response.IsSuccessStatusCode)
+        {
+            UploadStatus = "Upload erfolgreich!";
+            await LoadDocumentsAsync();
+        }
+        else
+        {
+            UploadStatus = "Fehler beim Upload.";
+        }
+    }
+}

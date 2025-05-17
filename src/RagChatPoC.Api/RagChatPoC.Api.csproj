@@ -28,4 +28,8 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\RagChatPoC.Domain\RagChatPoC.Domain.csproj" />
+    </ItemGroup>
+
 </Project>

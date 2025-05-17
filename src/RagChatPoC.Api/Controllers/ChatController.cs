@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Services.Interfaces;
+using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.Controllers;
 
@@ -24,25 +24,24 @@ public class ChatController(IRagChatService ragChatService,
             Response.Headers["Cache-Control"] = "no-cache";
             Response.Headers["X-Accel-Buffering"] = "no"; // Für NGINX (deaktiviert Pufferung)
 
-            await foreach (var token in ragChatService.GetStreamingCompletionAsync(request))
+            await foreach (var chunk in ragChatService.GetStreamingCompletionAsync(request))
             {
-                logger.LogInformation("Generated token: {Token}", token);
-                var chunk = new
-                {
-                    id = "chatcmpl-" + Guid.NewGuid().ToString("N"),
-                    @object = "chat.completion.chunk",
-                    created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                    model = $"ollama-{request.Model}",
-                    choices = new[]
-                    {
-                        new
-                        {
-                            delta = new { content = token },
-                            index = 0,
-                            finish_reason = (string?)null
-                        }
-                    }
-                };
+                // var chunk = new
+                // {
+                //     id = "chatcmpl-" + Guid.NewGuid().ToString("N"),
+                //     @object = "chat.completion.chunk",
+                //     created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                //     model = $"ollama-{request.Model}",
+                //     choices = new[]
+                //     {
+                //         new
+                //         {
+                //             delta = new { content = token },
+                //             index = 0,
+                //             finish_reason = (string?)null
+                //         }
+                //     }
+                // };
                 var json = JsonSerializer.Serialize(chunk);
                 
                 await Response.WriteAsync($"data: {json}\n\n");

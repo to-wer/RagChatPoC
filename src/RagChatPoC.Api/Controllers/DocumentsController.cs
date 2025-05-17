@@ -1,13 +1,22 @@
 using System.IO.Compression;
 using Microsoft.AspNetCore.Mvc;
+using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services.Interfaces;
 
 namespace RagChatPoC.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class DocumentsController(IFileProcessingService fileProcessingService) : ControllerBase
+public class DocumentsController(IFileProcessingService fileProcessingService,
+    IDocumentService documentService) : ControllerBase
 {
+    [HttpGet]
+    public async Task<IActionResult> GetDocuments()
+    {
+        var documents = await documentService.GetAllDocuments();
+        return Ok(documents);
+    }
+    
     [HttpPost]
     public async Task<IActionResult> UploadFile(IFormFile file)
     {

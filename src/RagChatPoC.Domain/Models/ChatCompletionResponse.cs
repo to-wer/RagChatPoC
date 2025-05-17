@@ -1,4 +1,4 @@
-namespace RagChatPoC.Api.Models;
+namespace RagChatPoC.Domain.Models;
 
 public class ChatCompletionResponse
 {

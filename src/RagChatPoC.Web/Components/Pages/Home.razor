@@ -1,0 +1,64 @@
+﻿@page "/"
+@using RagChatPoC.Web.ViewModels
+@inject ChatViewModel ViewModel
+@inject ILogger<Home> Logger
+
+<PageTitle>Home</PageTitle>
+
+<h3>Chat mit deinem RAG-System</h3>
+
+<div class="chat-container" style="max-width: 600px; margin: auto;">
+    @foreach (var message in ViewModel.Messages.Where(message => !string.IsNullOrEmpty(message.Content)))
+    {
+        <div class="@message.Role.ToLower()" style="white-space: pre-wrap;">
+            <strong>@message.Role:</strong>
+            <span class="animated-text">@message.Content
+                @if (ViewModel.IsStreaming && message == ViewModel.Messages.LastOrDefault(m => m.Role == "assistant"))
+                {
+                    <span class="blinking-caret">█</span>
+                }
+                </span>
+        </div>
+    }
+    @if (ViewModel.IsBusy)
+    {
+        <p><em>Antwort wird generiert ...</em></p>
+    }
+
+    <div class="mt-3">
+        <textarea class="form-control" @bind="ViewModel.CurrentMessage" placeholder="Frage stellen..." rows="3" @onkeydown="@OnEnterPress"></textarea>
+        <button class="btn btn-primary mt-2" @onclick="OnSendAsync" disabled="@ViewModel.IsBusy">Senden</button>
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="useStreaming" @bind="ViewModel.UseStreaming" />
+            <label class="form-check-label" for="useStreaming">Streaming verwenden</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    
+    protected override void OnInitialized()
+    {
+        ViewModel.OnNewToken += () =>
+        {
+            InvokeAsync(StateHasChanged); // Live-Update bei jedem Token
+        };
+    }
+
+    private async Task OnSendAsync()
+    {
+        Logger.LogDebug("OnSendAsync");
+        await ViewModel.SendMessageAsync();
+        StateHasChanged(); // manuell nötig bei Streaming
+    }
+
+    private async Task OnEnterPress(KeyboardEventArgs e)
+    {
+        if (e is { Key: "Enter", ShiftKey: false })
+        {
+            //e.PreventDefault(); // keine neue Zeile
+            await OnSendAsync();
+        }
+    }
+    
+}

@@ -55,9 +55,9 @@ jobs:
         run: dotnet publish RagChatPoC.Api/RagChatPoC.Api.csproj --configuration Release
         working-directory: src
 
-#      - name: Publish Web
-#        run: dotnet publish RagChatPoC.Web/RagChatPoC.Web.csproj --configuration Release
-#        working-directory: src
+      - name: Publish Web
+        run: dotnet publish RagChatPoC.Web/RagChatPoC.Web.csproj --configuration Release
+        working-directory: src
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
@@ -86,15 +86,15 @@ jobs:
             type=ref,event=branch,pattern=*,prefix=,sanitize=true
             type=ref,event=tag,pattern=v*,local=true
 
-#      - name: Extract Docker metadata web
-#        id: meta-web
-#        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web
-#          tags: |
-#            type=ref,event=branch,pattern=main,local=true
-#            type=ref,event=branch,pattern=*,prefix=,sanitize=true
-#            type=ref,event=tag,pattern=v*,local=true
+      - name: Extract Docker metadata web
+        id: meta-web
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web
+          tags: |
+            type=ref,event=branch,pattern=main,local=true
+            type=ref,event=branch,pattern=*,prefix=,sanitize=true
+            type=ref,event=tag,pattern=v*,local=true
 
       - name: Build and push Docker image api
         id: build-and-push-api
@@ -109,18 +109,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-#      - name: Build and push Docker image web
-#        id: build-and-push-web
-#        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
-#        with:
-#          context: ./src/RagChatPoC.Web/bin/Release/net9.0/publish
-#          file: src/RagChatPoC.Web/Dockerfile
-#          platforms: linux/amd64,linux/arm64
-#          push: ${{ github.event_name != 'pull_request' }}
-#          tags: ${{ steps.meta-web.outputs.tags }}
-#          labels: ${{ steps.meta-web.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
+      - name: Build and push Docker image web
+        id: build-and-push-web
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        with:
+          context: ./src/RagChatPoC.Web/bin/Release/net9.0/publish
+          file: src/RagChatPoC.Web/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Sign the published Docker image api
         if: ${{ github.event_name != 'pull_request' }}
@@ -129,12 +129,12 @@ jobs:
           DIGEST: ${{ steps.build-and-push-api.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
-#      - name: Sign the published Docker image web
-#        if: ${{ github.event_name != 'pull_request' }}
-#        env:
-#          TAGS: ${{ steps.meta-web.outputs.tags }}
-#          DIGEST: ${{ steps.build-and-push-web.outputs.digest }}
-#        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+      - name: Sign the published Docker image web
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          TAGS: ${{ steps.meta-web.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push-web.outputs.digest }}
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
       - name: 'Clean up docker images api'
         uses: dataaxiom/ghcr-cleanup-action@v1
@@ -145,12 +145,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           package: ragchatpoc/api
 
-#      - name: 'Clean up docker images web'
-#        uses: dataaxiom/ghcr-cleanup-action@v1
-#        with:
-#          dry-run: false
-#          #          keep-n-tagged: 10
-#          delete-untagged: true
-#          #          delete-partial-images: true
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          package: ragchatpoc/web
+      - name: 'Clean up docker images web'
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          dry-run: false
+          #          keep-n-tagged: 10
+          delete-untagged: true
+          #          delete-partial-images: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          package: ragchatpoc/web

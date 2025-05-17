@@ -1,3 +1,5 @@
+using RagChatPoC.Domain.Models;
+
 namespace RagChatPoC.Api.Models;
 
 public class OllamaChatRequest
