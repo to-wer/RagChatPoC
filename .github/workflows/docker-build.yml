@@ -34,48 +34,10 @@ jobs:
         with:
           dotnet-version: '9.x'
 
-      - name: Setup Java (für SonarQube)
-        #        if: github.ref == 'refs/heads/main'
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      
-      #      - name: Cache SonarQube Cloud packages
-      #        uses: actions/cache@v4
-      #        with:
-      #          path: ~/sonar/cache
-      #          key: ${{ runner.os }}-sonar
-      #          restore-keys: ${{ runner.os }}-sonar
-      #        
-      #      - name: Cache SonarQube Cloud scanner
-      #        id: cache-sonar-scanner
-      #        uses: actions/cache@v4
-      #        with:
-      #          path: ./.sonar/scanner
-      #          key: ${{ runner.os }}-sonar-scanner
-      #          restore-keys: ${{ runner.os }}-sonar-scanner
-
-      - name: Install SonarQube Cloud scanner
-        #        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-        run: |
-          dotnet tool install --global dotnet-sonarscanner
-      #          dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner      
-
       - name: Install dotnet-coverage
         # if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         run: |
           dotnet tool install --global dotnet-coverage
-
-#      - name: Start SonarQube Analysis
-#        #if: github.ref == 'refs/heads/main'
-#        run: |
-#          dotnet-sonarscanner begin /k:"to-wer_RagChatPoC" \
-#            /o:"torsten-werner" \
-#            /d:sonar.host.url="https://sonarcloud.io" \
-#            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-#            /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
-#        working-directory: src
 
       - name: Restore dependencies
         run: dotnet restore
@@ -88,12 +50,7 @@ jobs:
       - name: Run tests
         run: dotnet-coverage collect "dotnet test --no-build --configuration Release" -f xml -o "coverage.xml"
         working-directory: src
-
-#      - name: Complete SonarQube Analysis
-#        #        if: github.ref == 'refs/heads/main'
-#        run: dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-#        working-directory: src
-      
+        
       - name: Publish API
         run: dotnet publish RagChatPoC.Api/RagChatPoC.Api.csproj --configuration Release
         working-directory: src
@@ -179,13 +136,21 @@ jobs:
 #          DIGEST: ${{ steps.build-and-push-web.outputs.digest }}
 #        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
+      - name: Check if package exists
+        run: |
+          API_PACKAGE="ragchatpoc/api"
+          if ! gh api repos/${{ github.repository }}/packages/docker/${{ API_PACKAGE }} >/dev/null 2>&1; then
+          echo "Package $API_PACKAGE does not exist, skipping cleanup..."
+          exit 0
+          fi
+
       - name: 'Clean up docker images api'
         uses: dataaxiom/ghcr-cleanup-action@v1
+        if: always() # This step will always run, even if the previous step fails
         with:
           dry-run: false
-          #          keep-n-tagged: 10
+          keep-n-tagged: 10
           delete-untagged: true
-          #          delete-partial-images: true
           token: ${{ secrets.GITHUB_TOKEN }}
           package: ragchatpoc/api
 
