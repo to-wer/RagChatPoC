@@ -13,6 +13,8 @@ public class ChatViewModel
     public bool IsBusy { get; private set; }
     public string Model { get; set; } = "llama3.2";
     public bool UseStreaming { get; set; } = true;
+    
+    public event Action? OnNewToken;
 
     public ChatViewModel(IHttpClientFactory httpClientFactory,
         ILogger<ChatViewModel> logger)
@@ -39,6 +41,9 @@ public class ChatViewModel
 
         if (UseStreaming)
         {
+            _logger.LogDebug("Using streaming for response");
+            var lastAssistant = new ChatMessage { Role = "assistant", Content = string.Empty };
+            Messages.Add(lastAssistant);
             await foreach (var chunk in StreamChatResponseAsync())
             {
                 AppendOrUpdateAssistantMessage(chunk);
@@ -75,6 +80,7 @@ public class ChatViewModel
         {
             lastAssistant.Content += chunk;
         }
+        OnNewToken?.Invoke();
     }
 
     private async IAsyncEnumerable<string> StreamChatResponseAsync()

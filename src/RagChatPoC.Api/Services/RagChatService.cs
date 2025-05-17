@@ -16,10 +16,10 @@ public class RagChatService(
     public async Task<ChatCompletionResponse> GetCompletionAsync(ChatCompletionRequest request)
     {
         var ollamaRequest = await CreateOllamaChatRequest(request);
-        
+
         if (ollamaRequest == null)
             return new ChatCompletionResponse();
-        
+
         var response = await httpClient.PostAsync("http://localhost:11434/api/chat",
             new StringContent(JsonSerializer.Serialize(ollamaRequest), Encoding.UTF8, "application/json"));
 
@@ -45,12 +45,12 @@ public class RagChatService(
         };
     }
 
-    public async IAsyncEnumerable<string> GetStreamingCompletionAsync(ChatCompletionRequest request)
+    public async IAsyncEnumerable<ChatCompletionStreamChunk> GetStreamingCompletionAsync(ChatCompletionRequest request)
     {
         var ollamaRequest = await CreateOllamaChatRequest(request);
         if (ollamaRequest == null)
             yield break;
-        
+
         var requestJson = JsonSerializer.Serialize(ollamaRequest);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "http://localhost:11434/api/chat");
         httpRequest.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
@@ -68,11 +68,12 @@ public class RagChatService(
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            string? content = null;
+            //string? content = null;
+            OllamaChatStreamChunk? chunk = null;
             try
             {
-                var json = JsonSerializer.Deserialize<OllamaChatStreamChunk>(line);
-                content = json?.Message?.Content;
+                chunk = JsonSerializer.Deserialize<OllamaChatStreamChunk>(line);
+                //content = json?.Message?.Content;
             }
             catch (JsonException ex)
             {
@@ -80,13 +81,25 @@ public class RagChatService(
                 // Ignore malformed chunks
             }
 
-            if (!string.IsNullOrEmpty(content))
+            if (chunk != null)
             {
-                yield return content;
+                yield return new ChatCompletionStreamChunk()
+                {
+                    Choices = new()
+                    {
+                        new ChatCompletionStreamChunk.StreamChoice()
+                        {
+                            Delta = new()
+                            {
+                                Content = chunk.Message?.Content
+                            }
+                        }
+                    }
+                };
             }
         }
     }
-    
+
     private async Task<OllamaChatRequest?> CreateOllamaChatRequest(ChatCompletionRequest request)
     {
         var lastUserMessage = request.Messages
@@ -94,10 +107,10 @@ public class RagChatService(
 
         if (lastUserMessage == null)
             return null;
-        
+
         var questionEmbedding = await embeddingService.GetEmbeddingAsync(lastUserMessage.Content);
         var relevantChunks = await documentChunkRepository.GetRelevantChunks(questionEmbedding);
-        
+
         var context = string.Join("\n---\n", relevantChunks.Select(c => c.ChunkText));
 
         var systemPrompt = $"""
@@ -113,7 +126,7 @@ public class RagChatService(
             new() { Role = "system", Content = systemPrompt }
         };
         newMessages.AddRange(request.Messages);
-        
+
         return new OllamaChatRequest
         {
             Model = request.Model,
@@ -121,5 +134,4 @@ public class RagChatService(
             Messages = newMessages.ToArray()
         };
     }
-
 }
