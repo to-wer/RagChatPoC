@@ -2,6 +2,7 @@ using System.IO.Compression;
 using Microsoft.AspNetCore.Mvc;
 using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services.Interfaces;
+using RagChatPoC.Api.Utils;
 
 namespace RagChatPoC.Api.Controllers;
 
@@ -22,12 +23,28 @@ public class DocumentsController(IFileProcessingService fileProcessingService,
     {
         if (file == null || file.Length == 0) return BadRequest("Keine Datei hochgeladen");
 
-        using var stream = file.OpenReadStream();
-        using var reader = new StreamReader(stream);
-        var text = await reader.ReadToEndAsync();
+        await using var fileStream = file.OpenReadStream();
+        if (file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            fileStream.Seek(0, SeekOrigin.Begin); // Sicherstellen, dass du von Anfang an liest
+
+            var rawText = PdfHelper.ExtractTextFromPdf(fileStream);
+            // text = text.Replace("\0", string.Empty);
+            var cleanText = TextSanitizer.CleanTextForPostgres(rawText);
+            await fileProcessingService.ProcessTextAsync(file.FileName, cleanText);
+        }
+        else //if (file.Name.EndsWith(".md") || file.Name.EndsWith(".txt"))
+        {
+            var text = await new StreamReader(fileStream).ReadToEndAsync();
+            await fileProcessingService.ProcessTextAsync(file.FileName, text);
+        }
+        
+        // using var stream = file.OpenReadStream();
+        // using var reader = new StreamReader(stream);
+        // var text = await reader.ReadToEndAsync();
 
         // Chunking + Embedding + Speicherung auslagern
-        await fileProcessingService.ProcessTextAsync(file.FileName, text);
+        // await fileProcessingService.ProcessTextAsync(file.FileName, text);
 
         return Ok("Datei indexiert");
     }
