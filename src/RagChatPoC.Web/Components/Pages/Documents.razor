@@ -26,6 +26,7 @@ else
                 <th>Datei</th>
                 <th>Chunks</th>
                 <th>Hochgeladen</th>
+                <th>&nbsp;</th>
             </tr>
         </thead>
         <tbody>
@@ -35,6 +36,9 @@ else
                     <td>@doc.FileName</td>
                     <td>@doc.ChunkCount</td>
                     <td>@doc.CreatedAt?.ToLocalTime()</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="() => DeleteDocument(doc.FileName)">Löschen</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -79,4 +83,18 @@ else
             UploadStatus = "Fehler beim Upload.";
         }
     }
+
+    private async Task DeleteDocument(string docFileName)
+    {
+        var response = await _httpClient.DeleteAsync($"api/documents/{docFileName}");
+        if (response.IsSuccessStatusCode)
+        {
+            DocumentList = DocumentList?.Where(d => d.FileName != docFileName).ToList();
+        }
+        else
+        {
+            Console.WriteLine("Fehler beim Löschen des Dokuments.");
+        }
+    }
+
 }
