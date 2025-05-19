@@ -13,10 +13,6 @@ public static class PdfHelper
 
         foreach (Page page in pdf.GetPages())
         {
-            // foreach (var word in page.GetWords())
-            // {
-            //     sb.Append(word);
-            // }
             sb.AppendLine(page.Text);
         }
 
