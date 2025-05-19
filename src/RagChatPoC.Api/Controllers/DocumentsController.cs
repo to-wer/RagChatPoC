@@ -65,4 +65,10 @@ public class DocumentsController(IFileProcessingService fileProcessingService,
         return Ok("Dateien indexiert");
     }
     
+    [HttpDelete("{fileName}")]
+    public async Task<IActionResult> DeleteDocument(string fileName)
+    {
+        await documentService.DeleteDocument(fileName);
+        return Ok("Datei gelöscht");
+    }
 }

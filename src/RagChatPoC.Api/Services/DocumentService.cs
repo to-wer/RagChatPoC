@@ -11,4 +11,9 @@ public class DocumentService(IDocumentChunkRepository documentChunkRepository) :
         var documents = await documentChunkRepository.GetAllDocuments();
         return documents;
     }
+
+    public async Task DeleteDocument(string fileName)
+    {
+        await documentChunkRepository.DeleteDocument(fileName);
+    }
 }
