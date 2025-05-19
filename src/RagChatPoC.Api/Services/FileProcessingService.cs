@@ -4,7 +4,8 @@ using RagChatPoC.Api.Services.Interfaces;
 namespace RagChatPoC.Api.Services;
 
 public class FileProcessingService(IEmbeddingService embeddingService,
-    IIndexService indexService) : IFileProcessingService
+    IIndexService indexService,
+    ILogger<FileProcessingService> logger) : IFileProcessingService
 {
     public async Task ProcessTextAsync(string sourceFileName, string text)
     {
@@ -19,13 +20,22 @@ public class FileProcessingService(IEmbeddingService embeddingService,
     
     private List<TextChunk> ChunkText(string content, string source, int chunkLength = 1000)
     {
+        logger.LogDebug("Chunking text from {Source}. Length: {Length}", source, content.Length);
         var result = new List<TextChunk>();
-        var paragraphs = content.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+        string[] paragraphs;
+        if (source.EndsWith(".pdf"))
+        {
+            paragraphs = content.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+        }
+        else
+        {
+            paragraphs = content.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+        }
         var sb = new StringBuilder();
 
         foreach (var para in paragraphs)
         {
-            if (sb.Length + para.Length > 1000)
+            if (sb.Length + para.Length > chunkLength)
             {
                 result.Add(new TextChunk { Source = source, Content = sb.ToString().Trim() });
                 sb.Clear();
