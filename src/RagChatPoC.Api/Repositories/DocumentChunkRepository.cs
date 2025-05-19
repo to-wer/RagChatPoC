@@ -47,4 +47,11 @@ public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepos
             .ToList();
         return Task.FromResult(relevantChunks);
     }
+
+    public async Task DeleteDocument(string fileName)
+    {
+        var chunks = context.Chunks.Where(c => c.SourceFile == fileName);
+        context.Chunks.RemoveRange(chunks);
+        await context.SaveChangesAsync();
+    }
 }
