@@ -1,0 +1,15 @@
+# Add patterns to ignore here, one per line
+# Example:
+# *.log
+# tmp/
+
+.gitignore
+.repomixignore
+repomix.config.json
+**/.dockerignore
+**/.idea/
+
+.devcontainer/
+.sonarlint/
+
+**/lib/
