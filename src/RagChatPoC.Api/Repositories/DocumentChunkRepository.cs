@@ -30,7 +30,7 @@ public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepos
         await context.SaveChangesAsync();
     }
 
-    public Task<List<DocumentChunk>> GetRelevantChunks(string questionEmbedding)
+    public Task<List<UsedContextChunk>> GetRelevantChunks(string questionEmbedding)
     {
         var queryEmbedding = JsonSerializer.Deserialize<float[]>(questionEmbedding);
 
@@ -43,7 +43,12 @@ public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepos
             })
             .OrderByDescending(x => x.Similarity)
             .Take(5) // oder 10
-            .Select(x => x.Chunk)
+            .Select(x => new UsedContextChunk()
+            {
+                Snippet = x.Chunk.ChunkText,
+                SourceFile = x.Chunk.SourceFile,
+                Score = x.Similarity
+            })
             .ToList();
         return Task.FromResult(relevantChunks);
     }

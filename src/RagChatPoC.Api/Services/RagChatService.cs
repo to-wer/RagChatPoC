@@ -8,22 +8,25 @@ using RagChatPoC.Domain.Models;
 namespace RagChatPoC.Api.Services;
 
 public class RagChatService(
-    IDocumentChunkRepository documentChunkRepository,
-    IEmbeddingService embeddingService,
+    IConfiguration configuration,
     IHttpClientFactory httpClientFactory,
-    ILogger<RagChatService> logger) : IRagChatService
+    ILogger<RagChatService> logger,
+    IChatHelperService chatHelperService) : IRagChatService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("OllamaClient");
-    
+
     public async Task<ChatCompletionResponse> GetCompletion(ChatCompletionRequest request)
     {
-        var ollamaRequest = await CreateOllamaChatRequest(request);
-
-        if (ollamaRequest == null)
+        var latestUserMessage = chatHelperService.GetLatestUserMessage(request);
+        if (latestUserMessage == null)
             return new ChatCompletionResponse();
 
+        var relevantChunks = await chatHelperService.GetRelevantChunks(latestUserMessage);
+
+        request = await chatHelperService.PrepareChatRequest(request, relevantChunks);
+
         var response = await _httpClient.PostAsync("api/chat",
-            new StringContent(JsonSerializer.Serialize(ollamaRequest), Encoding.UTF8, "application/json"));
+            new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
 
         response.EnsureSuccessStatusCode();
 
@@ -43,25 +46,49 @@ public class RagChatService(
                     }
                 }
             ],
-            Model = ollamaChatResponse?.Model ?? string.Empty
+            Model = ollamaChatResponse?.Model ?? string.Empty,
+            Context =
+                relevantChunks.Select(x => new UsedContextChunk()
+                {
+                    Snippet = x.Snippet.Length > 300 ? x.Snippet[..300] + "..." : x.Snippet,
+                    SourceFile = x.SourceFile,
+                    Score = x.Score
+                }).ToList()
         };
     }
 
-    public async IAsyncEnumerable<ChatCompletionStreamChunk> GetStreamingCompletion(ChatCompletionRequest request)
+    public async IAsyncEnumerable<string> GetStreamingCompletion(ChatCompletionRequest request)
     {
-        var ollamaRequest = await CreateOllamaChatRequest(request);
-        if (ollamaRequest == null)
+        var latestUserMessage = chatHelperService.GetLatestUserMessage(request);
+        if (latestUserMessage == null)
             yield break;
 
-        var requestJson = JsonSerializer.Serialize(ollamaRequest);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/chat");
-        httpRequest.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+        var relevantChunks = await chatHelperService.GetRelevantChunks(latestUserMessage);
+
+        var contextJson = JsonSerializer.Serialize(new
+        {
+            context = relevantChunks.Select(x => new UsedContextChunk()
+            {
+                Snippet = x.Snippet.Length > 300 ? x.Snippet[..300] + "..." : x.Snippet,
+                SourceFile = x.SourceFile,
+                Score = x.Score
+            })
+        });
+        logger.LogInformation(contextJson);
+        yield return contextJson; // << Erstes data:-Event enthält Kontext
+
+        request = await chatHelperService.PrepareChatRequest(request, relevantChunks);
+
+        var requestJson = JsonSerializer.Serialize(request);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{configuration["OLLAMA_HOST"]}/api/chat")
+        {
+            Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
+        };
 
         using var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
-
         response.EnsureSuccessStatusCode();
 
-        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var stream = await response.Content.ReadAsStreamAsync();
         using var reader = new StreamReader(stream);
 
         while (!reader.EndOfStream)
@@ -70,72 +97,35 @@ public class RagChatService(
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            //string? content = null;
-            OllamaChatStreamChunk? chunk = null;
+            string? content = null;
             try
             {
-                chunk = JsonSerializer.Deserialize<OllamaChatStreamChunk>(line);
-                //content = json?.Message?.Content;
+                var chunk = JsonSerializer.Deserialize<OllamaChatStreamChunk>(line);
+                content = chunk?.Message?.Content;
             }
-            catch (JsonException ex)
+            catch
             {
-                logger.LogWarning("Failed to deserialize JSON: {Message}", ex.Message);
-                // Ignore malformed chunks
+                // Skip invalid lines
             }
 
-            if (chunk != null)
-            {
-                yield return new ChatCompletionStreamChunk()
+            logger.LogInformation(content);
+            if (!string.IsNullOrEmpty(content))
+                yield return JsonSerializer.Serialize(new ChatCompletionStreamChunk()
                 {
-                    Choices = new()
+                    Id = "chatcmpl-" + Guid.NewGuid().ToString("N"),
+                    Object = "chat.completion.chunk",
+                    Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    Model = $"ollama-{request.Model}",
+                    Choices = new[]
                     {
                         new ChatCompletionStreamChunk.StreamChoice()
                         {
-                            Delta = new()
-                            {
-                                Content = chunk.Message?.Content
-                            }
+                            Delta = new ChatMessage() { Content = content},
+                            Index = 0,
+                            FinishReason = (string?)null
                         }
-                    }
-                };
-            }
+                    }.ToList()
+                });
         }
-    }
-
-    private async Task<OllamaChatRequest?> CreateOllamaChatRequest(ChatCompletionRequest request)
-    {
-        var lastUserMessage = request.Messages
-            .LastOrDefault(m => m.Role == "user");
-
-        if (lastUserMessage == null)
-            return null;
-
-        var questionEmbedding = await embeddingService.GetEmbeddingAsync(lastUserMessage.Content);
-        var relevantChunks = await documentChunkRepository.GetRelevantChunks(questionEmbedding);
-
-        logger.LogInformation("Relevant chunks: {RelevantChunks}", string.Join(", ", relevantChunks.Select(c => c.SourceFile)));
-        
-        var context = string.Join("\n---\n", relevantChunks.Select(c => c.ChunkText));
-
-        var systemPrompt = $"""
-                                You are a helpful assistant. Use the following context to answer the user's question.
-
-                                Context:
-                                {context}
-                            """;
-
-        // Neue Nachrichtenliste mit Kontext als System-Nachricht
-        var newMessages = new List<ChatMessage>
-        {
-            new() { Role = "system", Content = systemPrompt }
-        };
-        newMessages.AddRange(request.Messages);
-
-        return new OllamaChatRequest
-        {
-            Model = request.Model,
-            Stream = request.Stream,
-            Messages = newMessages.ToArray()
-        };
     }
 }

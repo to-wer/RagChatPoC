@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Web.ViewModels;
@@ -9,12 +10,13 @@ public class ChatViewModel
     private readonly HttpClient _httpClient;
     private readonly ILogger<ChatViewModel> _logger;
     public List<ChatMessage> Messages { get; set; } = new();
+    public List<UsedContextChunk> LastContext { get; private set; } = new();
     public string CurrentMessage { get; set; } = string.Empty;
     public bool IsBusy { get; private set; }
     public string Model { get; set; } = "llama3.2";
     public bool UseStreaming { get; set; } = true;
     public bool IsStreaming { get; private set; }
-    
+
     public event Action? OnNewToken;
 
     public ChatViewModel(IHttpClientFactory httpClientFactory,
@@ -27,7 +29,7 @@ public class ChatViewModel
     public async Task SendMessageAsync()
     {
         _logger.LogInformation("Sending message: {Message}", CurrentMessage);
-        
+
         if (string.IsNullOrWhiteSpace(CurrentMessage)) return;
 
         var userMessage = new ChatMessage
@@ -51,6 +53,7 @@ public class ChatViewModel
                 if (IsBusy) IsBusy = false;
                 AppendOrUpdateAssistantMessage(chunk);
             }
+
             IsStreaming = false;
             OnNewToken?.Invoke();
         }
@@ -69,10 +72,14 @@ public class ChatViewModel
             {
                 Messages.Add(assistantMessage);
             }
-        IsBusy = false;
-            
-        }
 
+            if (data?.Context.Any() ?? false)
+            {
+                LastContext = data.Context;
+            }
+
+            IsBusy = false;
+        }
     }
 
     private void AppendOrUpdateAssistantMessage(string chunk)
@@ -87,6 +94,7 @@ public class ChatViewModel
         {
             lastAssistant.Content += chunk;
         }
+
         OnNewToken?.Invoke();
     }
 
@@ -115,6 +123,28 @@ public class ChatViewModel
 
             var jsonPart = line["data:".Length..].Trim();
             if (jsonPart == "[DONE]") yield break;
+            
+            if (jsonPart.Contains("\"context\""))
+            {
+                try
+                {
+                    _logger.LogInformation(jsonPart);
+                    var wrapper = JsonSerializer.Deserialize<ContextWrapper>(jsonPart);
+                    _logger.LogInformation("Context Length: {Length}", jsonPart.Length);
+                    if (wrapper?.Context != null)
+                    {
+                        _logger.LogInformation("Context: {Context}", wrapper.Context.Length);
+                        LastContext = wrapper.Context.ToList();
+                        OnNewToken?.Invoke(); // UI-Update auslösen
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Error deserializing context: {Message}", ex.Message);
+                }
+
+                continue; // Kontext ist kein Token
+            }
 
             string? content = null;
             try
@@ -131,4 +161,9 @@ public class ChatViewModel
                 yield return content;
         }
     }
+}
+
+public class ContextWrapper
+{
+    [JsonPropertyName("context")] public UsedContextChunk[]? Context { get; set; }
 }
