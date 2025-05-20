@@ -1,0 +1,53 @@
+volumes:
+  pgdata:
+  ollama_data:
+
+services:
+  db:
+    image: postgres:17.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ragchat
+      POSTGRES_USER: ragchat
+      POSTGRES_PASSWORD: ragchat
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+  
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+#    ports:
+#      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    environment:
+      - OLLAMA_MODELS=llama3:latest
+  
+  api:
+    build:
+      context: ./src
+      dockerfile: RagChatPoC.Api/Dockerfile-Local
+    ports:
+      - "5000:8080"
+    depends_on:
+      - db
+      - ollama
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=ragchat;Username=ragchat;Password=ragchat;
+      - OLLAMA_HOST=http://ollama:11434
+
+  web:
+    build:
+      context: ./src
+      dockerfile: RagChatPoC.Web/Dockerfile-Local
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RAGCHAT_API_BASEURL=http://api:8080
+    depends_on:
+      - api
