@@ -36,19 +36,19 @@ public class FileProcessingHelperService(ILogger<FileProcessingHelperService> lo
         return result;
     }
 
-    private string[] SplitIntoParagraphs(string content, string source)
+    private static string[] SplitIntoParagraphs(string content, string source)
     {
         return source.EndsWith(".pdf")
             ? content.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries)
             : content.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
     }
 
-    private bool IsTooLongToAdd(StringBuilder currentChunk, string paragraph, int chunkLength)
+    private static bool IsTooLongToAdd(StringBuilder currentChunk, string paragraph, int chunkLength)
     {
         return currentChunk.Length + paragraph.Length > chunkLength;
     }
 
-    private void AddChunkIfNotEmpty(List<TextChunk> result, StringBuilder chunkBuilder, string source)
+    private static void AddChunkIfNotEmpty(List<TextChunk> result, StringBuilder chunkBuilder, string source)
     {
         if (chunkBuilder.Length == 0)
             return;
@@ -62,7 +62,7 @@ public class FileProcessingHelperService(ILogger<FileProcessingHelperService> lo
         chunkBuilder.Clear();
     }
 
-    private void SplitLongParagraph(string paragraph, int chunkLength, List<TextChunk> result, string source)
+    private static void SplitLongParagraph(string paragraph, int chunkLength, List<TextChunk> result, string source)
     {
         int start = 0;
 
