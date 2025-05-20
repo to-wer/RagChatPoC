@@ -12,8 +12,6 @@ services:
       POSTGRES_PASSWORD: ragchat
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - app-network
   
   ollama:
     image: ollama/ollama:latest
@@ -30,8 +28,6 @@ services:
     build:
       context: ./src
       dockerfile: RagChatPoC.Api/Dockerfile-Local
-    ports:
-      - "5000:8080"
     depends_on:
       - db
       - ollama
