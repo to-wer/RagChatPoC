@@ -29,7 +29,6 @@ public class Program
         builder.Services.AddScoped<IFileProcessingService, FileProcessingService>();
         builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
         builder.Services.AddScoped<IIndexService, IndexService>();
-        builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<IRagChatService, RagChatService>();
         builder.Services.AddScoped<IDocumentService, DocumentService>();
         

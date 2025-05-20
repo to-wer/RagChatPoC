@@ -402,3 +402,5 @@ FodyWeavers.xsd
 /repomix-output.txt
 **/appsettings.Development.json
 /repomix-output.md
+/rag-chat-poc.xml
+/rag-chat-poc.md
