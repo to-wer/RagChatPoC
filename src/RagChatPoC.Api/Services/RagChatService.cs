@@ -15,7 +15,7 @@ public class RagChatService(
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("OllamaClient");
     
-    public async Task<ChatCompletionResponse> GetCompletionAsync(ChatCompletionRequest request)
+    public async Task<ChatCompletionResponse> GetCompletion(ChatCompletionRequest request)
     {
         var ollamaRequest = await CreateOllamaChatRequest(request);
 
@@ -29,7 +29,7 @@ public class RagChatService(
 
         var ollamaChatResponse = await response.Content.ReadFromJsonAsync<OllamaChatResponse>();
 
-        return new ChatCompletionResponse()
+        return new ChatCompletionResponse
         {
             Choices =
             [
@@ -47,7 +47,7 @@ public class RagChatService(
         };
     }
 
-    public async IAsyncEnumerable<ChatCompletionStreamChunk> GetStreamingCompletionAsync(ChatCompletionRequest request)
+    public async IAsyncEnumerable<ChatCompletionStreamChunk> GetStreamingCompletion(ChatCompletionRequest request)
     {
         var ollamaRequest = await CreateOllamaChatRequest(request);
         if (ollamaRequest == null)
@@ -113,6 +113,8 @@ public class RagChatService(
         var questionEmbedding = await embeddingService.GetEmbeddingAsync(lastUserMessage.Content);
         var relevantChunks = await documentChunkRepository.GetRelevantChunks(questionEmbedding);
 
+        logger.LogInformation("Relevant chunks: {RelevantChunks}", string.Join(", ", relevantChunks.Select(c => c.SourceFile)));
+        
         var context = string.Join("\n---\n", relevantChunks.Select(c => c.ChunkText));
 
         var systemPrompt = $"""

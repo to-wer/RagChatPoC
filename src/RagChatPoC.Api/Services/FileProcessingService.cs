@@ -1,57 +1,16 @@
 using System.Text;
+using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Services.Interfaces;
 
 namespace RagChatPoC.Api.Services;
 
-public class FileProcessingService(IEmbeddingService embeddingService,
+public class FileProcessingService(
     IIndexService indexService,
-    ILogger<FileProcessingService> logger) : IFileProcessingService
+    IFileProcessingHelperService fileProcessingHelperService) : IFileProcessingService
 {
     public async Task ProcessTextAsync(string sourceFileName, string text)
     {
-        var chunks = ChunkText(text, sourceFileName);
+        var chunks = fileProcessingHelperService.ChunkText(text, sourceFileName);
         await indexService.IndexChunksAsync(chunks);
-        // foreach (var chunk in chunks)
-        // {
-        //     var embedding = await embeddingService.GetEmbeddingAsync(chunk.Content);
-        //     await indexService.SaveChunkAsync(sourceFileName, chunk, embedding);
-        // }
     }
-    
-    private List<TextChunk> ChunkText(string content, string source, int chunkLength = 1000)
-    {
-        logger.LogDebug("Chunking text from {Source}. Length: {Length}", source, content.Length);
-        var result = new List<TextChunk>();
-        string[] paragraphs;
-        if (source.EndsWith(".pdf"))
-        {
-            paragraphs = content.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-        }
-        else
-        {
-            paragraphs = content.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
-        }
-        var sb = new StringBuilder();
-
-        foreach (var para in paragraphs)
-        {
-            if (sb.Length + para.Length > chunkLength)
-            {
-                result.Add(new TextChunk { Source = source, Content = sb.ToString().Trim() });
-                sb.Clear();
-            }
-            sb.AppendLine(para);
-        }
-
-        if (sb.Length > 0)
-            result.Add(new TextChunk { Source = source, Content = sb.ToString().Trim() });
-
-        return result;
-    }
-}
-
-public class TextChunk
-{
-    public string Source { get; set; } = default!;
-    public string Content { get; set; } = default!;
 }

@@ -24,24 +24,8 @@ public class ChatController(IRagChatService ragChatService,
             Response.Headers["Cache-Control"] = "no-cache";
             Response.Headers["X-Accel-Buffering"] = "no"; // Für NGINX (deaktiviert Pufferung)
 
-            await foreach (var chunk in ragChatService.GetStreamingCompletionAsync(request))
+            await foreach (var chunk in ragChatService.GetStreamingCompletion(request))
             {
-                // var chunk = new
-                // {
-                //     id = "chatcmpl-" + Guid.NewGuid().ToString("N"),
-                //     @object = "chat.completion.chunk",
-                //     created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                //     model = $"ollama-{request.Model}",
-                //     choices = new[]
-                //     {
-                //         new
-                //         {
-                //             delta = new { content = token },
-                //             index = 0,
-                //             finish_reason = (string?)null
-                //         }
-                //     }
-                // };
                 var json = JsonSerializer.Serialize(chunk);
                 
                 await Response.WriteAsync($"data: {json}\n\n");
@@ -54,7 +38,7 @@ public class ChatController(IRagChatService ragChatService,
             return new EmptyResult();
         }
 
-        var result = await ragChatService.GetCompletionAsync(request);
+        var result = await ragChatService.GetCompletion(request);
         return Ok(result);
     }
 }
