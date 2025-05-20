@@ -16,13 +16,11 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
-#    ports:
-#      - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     restart: unless-stopped
     environment:
-      - OLLAMA_MODELS=llama3:latest
+      - OLLAMA_MODELS=llama3.2:latest
   
   api:
     build:
