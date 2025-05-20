@@ -1,3 +1,5 @@
+using RagChatPoC.Api.Models;
+
 namespace RagChatPoC.Api.Services.Interfaces;
 
 public interface IIndexService

@@ -26,6 +26,7 @@ public class Program
         builder.Services.AddScoped<IDocumentChunkRepository, DocumentChunkRepository>();
         builder.Services.AddScoped<IChatSessionRepository, ChatSessionRepository>();
         builder.Services.AddScoped<IChatMessagesRepository, ChatMessageRepository>();
+        builder.Services.AddScoped<IFileProcessingHelperService, FileProcessingHelperService>();
         builder.Services.AddScoped<IFileProcessingService, FileProcessingService>();
         builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
         builder.Services.AddScoped<IIndexService, IndexService>();

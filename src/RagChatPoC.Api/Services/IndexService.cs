@@ -1,5 +1,6 @@
 using Pgvector;
 using RagChatPoC.Api.Data;
+using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services.Interfaces;
 
