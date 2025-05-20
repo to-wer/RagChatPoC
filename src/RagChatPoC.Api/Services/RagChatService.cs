@@ -8,8 +8,7 @@ using RagChatPoC.Domain.Models;
 namespace RagChatPoC.Api.Services;
 
 public class RagChatService(
-    IDocumentChunkRepository documentChunkRepository,
-    IEmbeddingService embeddingService,
+    IConfiguration configuration,
     IHttpClientFactory httpClientFactory,
     ILogger<RagChatService> logger,
     IChatHelperService chatHelperService) : IRagChatService
@@ -81,7 +80,7 @@ public class RagChatService(
         request = await chatHelperService.PrepareChatRequest(request, relevantChunks);
 
         var requestJson = JsonSerializer.Serialize(request);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "http://localhost:11434/api/chat")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{configuration["OLLAMA_HOST"]}/api/chat")
         {
             Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
         };
