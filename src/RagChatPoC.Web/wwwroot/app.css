@@ -81,3 +81,10 @@ h1:focus {
         opacity: 0;
     }
 }
+
+.context-box {
+    border-left: 4px solid #ccc;
+    padding-left: 1rem;
+    background-color: #f9f9f9;
+}
+

@@ -20,6 +20,25 @@
                 </span>
         </div>
     }
+    @if (ViewModel.LastContext.Any())
+    {
+        <div class="context-box mt-4 mb-3 p-3">
+            <h5 class="mb-2">📚 Verwendete Quellen:</h5>
+            <ul>
+                @foreach (var ctx in ViewModel.LastContext)
+                {
+                    <li class="mb-2">
+                        <strong>@ctx.SourceFile</strong><br />
+                        <span class="text-muted">@ctx.Snippet</span>
+                        @if (ctx.Score.HasValue)
+                        {
+                            <span class="badge bg-secondary ms-2">Score: @ctx.Score.Value:F2</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
     @if (ViewModel.IsBusy)
     {
         <p><em>Antwort wird generiert ...</em></p>

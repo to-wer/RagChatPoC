@@ -33,6 +33,12 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.x'
+          
+      - name: Setup Java (für SonarQube)
+          uses: actions/setup-java@v3
+          with:
+            distribution: 'temurin'
+            java-version: '17'
 
       - name: Install dotnet-coverage
         # if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
