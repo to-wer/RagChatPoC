@@ -8,37 +8,38 @@
 <h3>Chat mit deinem RAG-System</h3>
 
 <div class="chat-container" style="max-width: 600px; margin: auto;">
-    @foreach (var message in ViewModel.Messages.Where(message => !string.IsNullOrEmpty(message.Content)))
+    @foreach (var message in ViewModel.Messages.Where(message => !string.IsNullOrEmpty(message.Message.Content)))
     {
-        <div class="@message.Role.ToLower()" style="white-space: pre-wrap;">
-            <strong>@message.Role:</strong>
-            <span class="animated-text">@message.Content
-                @if (ViewModel.IsStreaming && message == ViewModel.Messages.LastOrDefault(m => m.Role == "assistant"))
+        <div class="@message.Message.Role.ToLower()" style="white-space: pre-wrap;">
+            <strong>@message.Message.Role:</strong>
+            <span class="animated-text">@message.Message.Content
+                @if (ViewModel.IsStreaming && message == ViewModel.Messages.LastOrDefault(m => m.Message.Role == "assistant"))
                 {
                     <span class="blinking-caret">█</span>
                 }
-                </span>
+            </span>
         </div>
+        @if (message.UsedContextChunks.Any())
+        {
+            <div class="context-box mt-4 mb-3 p-3">
+                <h5 class="mb-2">📚 Verwendete Quellen:</h5>
+                <ul>
+                    @foreach (var ctx in message.UsedContextChunks)
+                    {
+                        <li class="mb-2">
+                            <strong>@ctx.SourceFile</strong><br />
+                            <span class="text-muted">@ctx.Snippet</span>
+                            @if (ctx.Score.HasValue)
+                            {
+                                <span class="badge bg-secondary ms-2">Score: @ctx.Score.Value:F2</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
     }
-    @if (ViewModel.LastContext.Any())
-    {
-        <div class="context-box mt-4 mb-3 p-3">
-            <h5 class="mb-2">📚 Verwendete Quellen:</h5>
-            <ul>
-                @foreach (var ctx in ViewModel.LastContext)
-                {
-                    <li class="mb-2">
-                        <strong>@ctx.SourceFile</strong><br />
-                        <span class="text-muted">@ctx.Snippet</span>
-                        @if (ctx.Score.HasValue)
-                        {
-                            <span class="badge bg-secondary ms-2">Score: @ctx.Score.Value:F2</span>
-                        }
-                    </li>
-                }
-            </ul>
-        </div>
-    }
+    
     @if (ViewModel.IsBusy)
     {
         <p><em>Antwort wird generiert ...</em></p>

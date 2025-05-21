@@ -8,9 +8,13 @@ namespace RagChatPoC.Web.ViewModels;
 public class ChatViewModel
 {
     private readonly HttpClient _httpClient;
+
     private readonly ILogger<ChatViewModel> _logger;
-    public List<ChatMessage> Messages { get; set; } = new();
-    public List<UsedContextChunk> LastContext { get; private set; } = new();
+    // public List<ChatMessage> Messages { get; set; } = new();
+    // public List<UsedContextChunk> LastContext { get; private set; } = new();
+
+    public List<MessageWrapper> Messages { get; set; } = new();
+
     public string CurrentMessage { get; set; } = string.Empty;
     public bool IsBusy { get; private set; }
     public string Model { get; set; } = "llama3.2";
@@ -37,7 +41,7 @@ public class ChatViewModel
             Role = "user",
             Content = CurrentMessage
         };
-        Messages.Add(userMessage);
+        Messages.Add(new MessageWrapper(userMessage));
         CurrentMessage = string.Empty;
 
         if (UseStreaming)
@@ -47,7 +51,7 @@ public class ChatViewModel
 
             _logger.LogDebug("Using streaming for response");
             var lastAssistant = new ChatMessage { Role = "assistant", Content = string.Empty };
-            Messages.Add(lastAssistant);
+            Messages.Add(new MessageWrapper(lastAssistant));
             await foreach (var chunk in StreamChatResponseAsync())
             {
                 if (IsBusy) IsBusy = false;
@@ -64,18 +68,13 @@ public class ChatViewModel
             {
                 Model = Model,
                 Stream = false,
-                Messages = Messages
+                Messages = Messages.Select(m => m.Message).ToList()
             });
 
             var data = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>();
             if (data?.Choices?.FirstOrDefault()?.Message is { } assistantMessage)
             {
-                Messages.Add(assistantMessage);
-            }
-
-            if (data?.Context.Any() ?? false)
-            {
-                LastContext = data.Context;
+                Messages.Add(new MessageWrapper(assistantMessage, data.Context ?? []));
             }
 
             IsBusy = false;
@@ -84,15 +83,16 @@ public class ChatViewModel
 
     private void AppendOrUpdateAssistantMessage(string chunk)
     {
-        var lastAssistant = Messages.LastOrDefault(m => m.Role == "assistant");
+        var lastAssistant = Messages.LastOrDefault(m => m.Message.Role == "assistant");
         if (lastAssistant == null)
         {
-            lastAssistant = new ChatMessage { Role = "assistant", Content = chunk };
+            lastAssistant = new MessageWrapper(new ChatMessage { Role = "assistant", Content = chunk });
+            // Messages.Add(lastAssistant);
             Messages.Add(lastAssistant);
         }
         else
         {
-            lastAssistant.Content += chunk;
+            lastAssistant.Message.Content += chunk;
         }
 
         OnNewToken?.Invoke();
@@ -104,7 +104,7 @@ public class ChatViewModel
         {
             Model = Model,
             Stream = true,
-            Messages = Messages
+            Messages = Messages.Select(m => m.Message).ToList()
         };
 
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
@@ -123,7 +123,7 @@ public class ChatViewModel
 
             var jsonPart = line["data:".Length..].Trim();
             if (jsonPart == "[DONE]") yield break;
-            
+
             if (jsonPart.Contains("\"context\""))
             {
                 try
@@ -131,7 +131,13 @@ public class ChatViewModel
                     var wrapper = JsonSerializer.Deserialize<ContextWrapper>(jsonPart);
                     if (wrapper?.Context != null)
                     {
-                        LastContext = wrapper.Context.ToList();
+                        //LastContext = wrapper.Context.ToList();
+                        var lastAssistant = Messages.LastOrDefault(m => m.Message.Role == "assistant");
+                        if (lastAssistant != null)
+                        {
+                            lastAssistant.UsedContextChunks = wrapper.Context.ToList();
+                        }
+
                         OnNewToken?.Invoke(); // UI-Update auslösen
                     }
                 }
@@ -163,4 +169,28 @@ public class ChatViewModel
 public class ContextWrapper
 {
     [JsonPropertyName("context")] public UsedContextChunk[]? Context { get; set; }
+}
+
+public class MessageWrapper
+{
+    public ChatMessage Message { get; set; }
+    public List<UsedContextChunk> UsedContextChunks { get; set; }
+
+    public MessageWrapper()
+    {
+        Message = new ChatMessage();
+        UsedContextChunks = [];
+    }
+
+    public MessageWrapper(ChatMessage chatMessage)
+    {
+        Message = chatMessage;
+        UsedContextChunks = [];
+    }
+
+    public MessageWrapper(ChatMessage chatMessage, List<UsedContextChunk> usedContextChunks)
+    {
+        Message = chatMessage;
+        UsedContextChunks = usedContextChunks;
+    }
 }
