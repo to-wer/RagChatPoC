@@ -74,7 +74,6 @@ public class RagChatService(
                 Score = x.Score
             })
         });
-        logger.LogInformation(contextJson);
         yield return contextJson; // << Erstes data:-Event enthält Kontext
 
         request = await chatHelperService.PrepareChatRequest(request, relevantChunks);
@@ -108,7 +107,6 @@ public class RagChatService(
                 // Skip invalid lines
             }
 
-            logger.LogInformation(content);
             if (!string.IsNullOrEmpty(content))
                 yield return JsonSerializer.Serialize(new ChatCompletionStreamChunk()
                 {
