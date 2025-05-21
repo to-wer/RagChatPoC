@@ -128,19 +128,16 @@ public class ChatViewModel
             {
                 try
                 {
-                    _logger.LogInformation(jsonPart);
                     var wrapper = JsonSerializer.Deserialize<ContextWrapper>(jsonPart);
-                    _logger.LogInformation("Context Length: {Length}", jsonPart.Length);
                     if (wrapper?.Context != null)
                     {
-                        _logger.LogInformation("Context: {Context}", wrapper.Context.Length);
                         LastContext = wrapper.Context.ToList();
                         OnNewToken?.Invoke(); // UI-Update auslösen
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Error deserializing context: {Message}", ex.Message);
+                    _logger.LogError(ex, "Error deserializing context: {Message}", ex.Message);
                 }
 
                 continue; // Kontext ist kein Token
