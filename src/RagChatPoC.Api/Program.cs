@@ -21,6 +21,7 @@ public class Program
         builder.Services.AddHttpClient("OllamaClient", client =>
         {
             client.BaseAddress = new Uri(builder.Configuration["OLLAMA_HOST"] ?? string.Empty);
+            client.Timeout = TimeSpan.FromMinutes(5); // adjust as needed
         });
         
         builder.Services.AddScoped<IDocumentChunkRepository, DocumentChunkRepository>();
