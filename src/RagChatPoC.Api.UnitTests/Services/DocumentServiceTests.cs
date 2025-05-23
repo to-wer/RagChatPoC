@@ -1,25 +1,36 @@
 using Moq;
 using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services;
+using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.UnitTests.Services;
 
 public class DocumentServiceTests
 {
+    private readonly Mock<IDocumentChunkRepository> _documentChunkRepository = new();
+    private readonly Mock<IFileProcessingHelperService> _fileProcessingHelperService = new();
+    private readonly Mock<IEmbeddingService> _embeddingService = new();
+
+    private readonly DocumentService _documentService;
+
+    public DocumentServiceTests()
+    {
+        _documentService = new DocumentService(_documentChunkRepository.Object,
+            _fileProcessingHelperService.Object, _embeddingService.Object);
+    }
+
     [Fact]
     public async Task GetAllDocuments_ReturnsAllDocuments()
     {
-        var mockRepo = new Mock<IDocumentChunkRepository>();
         var expectedDocs = new List<DocumentDto>
         {
             new() { FileName = "doc1.pdf" },
             new() { FileName = "doc2.pdf" }
         };
-        mockRepo.Setup(r => r.GetAllDocuments()).ReturnsAsync(expectedDocs);
-        var service = new DocumentService(mockRepo.Object);
+        _documentChunkRepository.Setup(r => r.GetAllDocuments()).ReturnsAsync(expectedDocs);
 
-        var result = await service.GetAllDocuments();
+        var result = await _documentService.GetAllDocuments();
 
         Assert.Equal(expectedDocs, result);
     }
@@ -27,11 +38,9 @@ public class DocumentServiceTests
     [Fact]
     public async Task GetAllDocuments_ReturnsEmptyList_WhenNoDocumentsExist()
     {
-        var mockRepo = new Mock<IDocumentChunkRepository>();
-        mockRepo.Setup(r => r.GetAllDocuments()).ReturnsAsync(new List<DocumentDto>());
-        var service = new DocumentService(mockRepo.Object);
+        _documentChunkRepository.Setup(r => r.GetAllDocuments()).ReturnsAsync(new List<DocumentDto>());
 
-        var result = await service.GetAllDocuments();
+        var result = await _documentService.GetAllDocuments();
 
         Assert.Empty(result);
     }
@@ -39,23 +48,19 @@ public class DocumentServiceTests
     [Fact]
     public async Task DeleteDocument_DeletesDocumentByFileName()
     {
-        var mockRepo = new Mock<IDocumentChunkRepository>();
-        var service = new DocumentService(mockRepo.Object);
         var fileName = "test.pdf";
 
-        await service.DeleteDocument(fileName);
+        await _documentService.DeleteDocument(fileName);
 
-        mockRepo.Verify(r => r.DeleteDocument(fileName), Times.Once);
+        _documentChunkRepository.Verify(r => r.DeleteBySource(fileName), Times.Once);
     }
 
     [Fact]
     public async Task DeleteDocument_DoesNotThrow_WhenFileNameDoesNotExist()
     {
-        var mockRepo = new Mock<IDocumentChunkRepository>();
-        mockRepo.Setup(r => r.DeleteDocument(It.IsAny<string>())).Returns(Task.CompletedTask);
-        var service = new DocumentService(mockRepo.Object);
+        _documentChunkRepository.Setup(r => r.DeleteBySource(It.IsAny<string>())).Returns(Task.CompletedTask);
 
-        var exception = await Record.ExceptionAsync(() => service.DeleteDocument("nonexistent.pdf"));
+        var exception = await Record.ExceptionAsync(() => _documentService.DeleteDocument("nonexistent.pdf"));
 
         Assert.Null(exception);
     }

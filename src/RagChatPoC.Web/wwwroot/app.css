@@ -88,3 +88,16 @@ h1:focus {
     background-color: #f9f9f9;
 }
 
+details.context-box {
+    border-left: 4px solid #ccc;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+details.context-box summary {
+    font-weight: 500;
+    cursor: pointer;
+}
+
+

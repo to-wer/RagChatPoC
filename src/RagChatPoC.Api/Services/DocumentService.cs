@@ -1,10 +1,14 @@
+using System.Text.Json;
+using RagChatPoC.Api.Data;
 using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.Services;
 
-public class DocumentService(IDocumentChunkRepository documentChunkRepository) : IDocumentService
+public class DocumentService(IDocumentChunkRepository documentChunkRepository,
+    IFileProcessingHelperService fileProcessingHelperService,
+    IEmbeddingService embeddingService) : IDocumentService
 {
     public async Task<IEnumerable<DocumentDto>> GetAllDocuments()
     {
@@ -14,6 +18,6 @@ public class DocumentService(IDocumentChunkRepository documentChunkRepository) :
 
     public async Task DeleteDocument(string fileName)
     {
-        await documentChunkRepository.DeleteDocument(fileName);
+        await documentChunkRepository.DeleteBySource(fileName);
     }
 }

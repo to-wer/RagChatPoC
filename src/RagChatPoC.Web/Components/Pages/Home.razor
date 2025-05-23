@@ -12,22 +12,24 @@
     {
         <div class="@message.Message.Role.ToLower()" style="white-space: pre-wrap;">
             <strong>@message.Message.Role:</strong>
-            <span class="animated-text">@message.Message.Content
+            <span class="animated-text">
+                @message.Message.Content
                 @if (ViewModel.IsStreaming && message == ViewModel.Messages.LastOrDefault(m => m.Message.Role == "assistant"))
                 {
                     <span class="blinking-caret">█</span>
                 }
             </span>
         </div>
+
         @if (message.UsedContextChunks.Any())
         {
-            <div class="context-box mt-4 mb-3 p-3">
-                <h5 class="mb-2">📚 Verwendete Quellen:</h5>
-                <ul>
+            <details class="context-box mt-2 mb-3 p-3">
+                <summary class="mb-2 h6">📚 Verwendete Quellen anzeigen</summary>
+                <ul class="mt-2">
                     @foreach (var ctx in message.UsedContextChunks)
                     {
                         <li class="mb-2">
-                            <strong>@ctx.SourceFile</strong><br />
+                            <strong>@ctx.SourceFile</strong><br/>
                             <span class="text-muted">@ctx.Snippet</span>
                             @if (ctx.Score.HasValue)
                             {
@@ -36,27 +38,29 @@
                         </li>
                     }
                 </ul>
-            </div>
+            </details>
         }
     }
-    
+
+
     @if (ViewModel.IsBusy)
     {
         <p><em>Antwort wird generiert ...</em></p>
     }
 
     <div class="mt-3">
-        <textarea class="form-control" @bind="ViewModel.CurrentMessage" placeholder="Frage stellen..." rows="3" @onkeydown="@OnEnterPress"></textarea>
+        <textarea class="form-control" @bind="ViewModel.CurrentMessage" placeholder="Frage stellen..." rows="3"
+                  @onkeydown="@OnEnterPress"></textarea>
         <button class="btn btn-primary mt-2" @onclick="OnSendAsync" disabled="@ViewModel.IsBusy">Senden</button>
         <div class="form-check mt-2">
-            <input class="form-check-input" type="checkbox" id="useStreaming" @bind="ViewModel.UseStreaming" />
+            <input class="form-check-input" type="checkbox" id="useStreaming" @bind="ViewModel.UseStreaming"/>
             <label class="form-check-label" for="useStreaming">Streaming verwenden</label>
         </div>
     </div>
 </div>
 
 @code {
-    
+
     protected override void OnInitialized()
     {
         ViewModel.OnNewToken += () =>
@@ -80,5 +84,5 @@
             await OnSendAsync();
         }
     }
-    
+
 }

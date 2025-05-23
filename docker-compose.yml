@@ -13,14 +13,14 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
   
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
-    environment:
-      - OLLAMA_MODELS=llama3.2:latest
+#  ollama:
+#    image: ollama/ollama:latest
+#    container_name: ollama
+#    volumes:
+#      - ollama_data:/root/.ollama
+#    restart: unless-stopped
+#    environment:
+#      - OLLAMA_MODELS=llama3.2:latest
   
   api:
     build:
@@ -28,11 +28,11 @@ services:
       dockerfile: RagChatPoC.Api/Dockerfile-Local
     depends_on:
       - db
-      - ollama
+#      - ollama
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Database=ragchat;Username=ragchat;Password=ragchat;
-      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_HOST=http://host.docker.internal:11434
 
   web:
     build:

@@ -1,4 +1,3 @@
-using Pgvector;
 using RagChatPoC.Api.Data;
 using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Repositories;
@@ -11,7 +10,16 @@ public class IndexService(IEmbeddingService embeddingService,
 {
     public async Task IndexChunksAsync(IEnumerable<TextChunk> chunks)
     {
-        foreach (var chunk in chunks.Where(c => !string.IsNullOrWhiteSpace(c.Content)))
+        var textChunks = chunks as TextChunk[] ?? chunks.ToArray();
+        if(chunks == null || !textChunks.Any())
+        {
+            throw new ArgumentException("No chunks to index.");
+        }
+        
+        // check if the file already exists and delete it
+        await documentChunkRepository.DeleteBySource(textChunks.First().Source);
+        
+        foreach (var chunk in textChunks.Where(c => !string.IsNullOrWhiteSpace(c.Content)))
         {
             var embedding = await embeddingService.GetEmbeddingAsync(chunk.Content);
             

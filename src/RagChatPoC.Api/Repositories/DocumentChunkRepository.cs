@@ -10,6 +10,8 @@ namespace RagChatPoC.Api.Repositories;
 
 public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepository
 {
+    private const float ChunkScoreThreshold = 0.6f;
+    
     public async Task<IEnumerable<DocumentDto>> GetAllDocuments()
     {
         return await context.Chunks
@@ -41,6 +43,7 @@ public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepos
                 Chunk = c,
                 Similarity = EmbeddingUtils.CosineSimilarity(c.Embedding, queryEmbedding)
             })
+            .Where(c => c.Similarity >= ChunkScoreThreshold) // Filtere nur relevante Chunks
             .OrderByDescending(x => x.Similarity)
             .Take(5) // oder 10
             .Select(x => new UsedContextChunk()
@@ -53,9 +56,9 @@ public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepos
         return Task.FromResult(relevantChunks);
     }
 
-    public async Task DeleteDocument(string fileName)
+    public async Task DeleteBySource(string sourceFile)
     {
-        var chunks = context.Chunks.Where(c => c.SourceFile == fileName);
+        var chunks = context.Chunks.Where(c => c.SourceFile == sourceFile);
         context.Chunks.RemoveRange(chunks);
         await context.SaveChangesAsync();
     }

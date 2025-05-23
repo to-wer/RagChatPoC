@@ -22,8 +22,9 @@ public class DocumentsController(IFileProcessingService fileProcessingService,
     public async Task<IActionResult> UploadFile(IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest("Keine Datei hochgeladen");
-
+        
         await using var fileStream = file.OpenReadStream();
+        
         if (file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
         {
             fileStream.Seek(0, SeekOrigin.Begin);

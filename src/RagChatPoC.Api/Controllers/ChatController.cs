@@ -26,8 +26,6 @@ public class ChatController(IRagChatService ragChatService,
 
             await foreach (var chunk in ragChatService.GetStreamingCompletion(request))
             {
-                //var json = JsonSerializer.Serialize(chunk);
-                
                 await Response.WriteAsync($"data: {chunk}\n\n");
                 await Response.Body.FlushAsync();
             }
