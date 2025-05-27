@@ -18,9 +18,9 @@ public class DocumentsController(IFileProcessingService fileProcessingService,
     }
     
     [HttpPost]
-    public async Task<IActionResult> UploadFile(IFormFile file)
+    public async Task<IActionResult> UploadFile(IFormFile? file)
     {
-        if (file.Length == 0) return BadRequest("No file uploaded.");
+        if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
         
         await using var fileStream = file.OpenReadStream();
         
@@ -42,9 +42,9 @@ public class DocumentsController(IFileProcessingService fileProcessingService,
     }
     
     [HttpPost("upload-zip")]
-    public async Task<IActionResult> UploadZip(IFormFile zipFile)
+    public async Task<IActionResult> UploadZip(IFormFile? zipFile)
     {
-        if (zipFile.Length == 0) return BadRequest("No file uploaded.");
+        if (zipFile == null || zipFile.Length == 0) return BadRequest("No file uploaded.");
 
         await using var stream = zipFile.OpenReadStream();
         using var archive = new ZipArchive(stream);

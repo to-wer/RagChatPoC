@@ -34,7 +34,7 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(400, result.StatusCode);
-        Assert.Equal("Keine Datei hochgeladen", result.Value);
+        Assert.Equal("No file uploaded.", result.Value);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);
-        Assert.Equal("Datei indexiert", result.Value);
+        Assert.Equal("File indexed.", result.Value);
         mockFileProcessingService.Verify(s => s.ProcessTextAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
@@ -82,7 +82,7 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(400, result.StatusCode);
-        Assert.Equal("Keine Datei hochgeladen", result.Value);
+        Assert.Equal("No file uploaded.", result.Value);
     }
 
     [Fact]
@@ -96,6 +96,6 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);
-        Assert.Equal("Datei gelöscht", result.Value);
+        Assert.Equal("File deleted.", result.Value);
     }
 }
