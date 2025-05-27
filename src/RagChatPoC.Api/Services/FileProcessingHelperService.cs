@@ -39,8 +39,8 @@ public class FileProcessingHelperService(ILogger<FileProcessingHelperService> lo
     private static string[] SplitIntoParagraphs(string content, string source)
     {
         return source.EndsWith(".pdf")
-            ? content.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries)
-            : content.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+            ? content.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries)
+            : content.Split(["\n\n"], StringSplitOptions.RemoveEmptyEntries);
     }
 
     private static bool IsTooLongToAdd(StringBuilder currentChunk, string paragraph, int chunkLength)

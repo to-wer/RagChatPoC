@@ -6,9 +6,7 @@ using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.Services;
 
-public class DocumentService(IDocumentChunkRepository documentChunkRepository,
-    IFileProcessingHelperService fileProcessingHelperService,
-    IEmbeddingService embeddingService) : IDocumentService
+public class DocumentService(IDocumentChunkRepository documentChunkRepository) : IDocumentService
 {
     public async Task<IEnumerable<DocumentDto>> GetAllDocuments()
     {

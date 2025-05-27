@@ -16,8 +16,7 @@ public class DocumentServiceTests
 
     public DocumentServiceTests()
     {
-        _documentService = new DocumentService(_documentChunkRepository.Object,
-            _fileProcessingHelperService.Object, _embeddingService.Object);
+        _documentService = new DocumentService(_documentChunkRepository.Object);
     }
 
     [Fact]
