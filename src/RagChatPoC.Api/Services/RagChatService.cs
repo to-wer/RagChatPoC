@@ -10,7 +10,6 @@ namespace RagChatPoC.Api.Services;
 public class RagChatService(
     IConfiguration configuration,
     IHttpClientFactory httpClientFactory,
-    ILogger<RagChatService> logger,
     IChatHelperService chatHelperService) : IRagChatService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("OllamaClient");

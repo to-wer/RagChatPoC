@@ -9,7 +9,7 @@ namespace RagChatPoC.Api.Services;
 public class ChatHelperService(IEmbeddingService embeddingService,
     IDocumentChunkRepository documentChunkRepository) : IChatHelperService
 {
-    public async Task<ChatCompletionRequest> PrepareChatRequest(ChatCompletionRequest request, List<UsedContextChunk> relevantChunks)
+    public Task<ChatCompletionRequest> PrepareChatRequest(ChatCompletionRequest request, List<UsedContextChunk> relevantChunks)
     {
         var context = string.Join("\n---\n", relevantChunks.Select(c => c.Snippet));
 
@@ -26,12 +26,12 @@ public class ChatHelperService(IEmbeddingService embeddingService,
         };
         newMessages.AddRange(request.Messages);
         
-        return new ChatCompletionRequest()
+        return Task.FromResult(new ChatCompletionRequest()
         {
             Messages = newMessages,
             Model = request.Model,
             Stream = request.Stream
-        };
+        });
     }
 
     public ChatMessage? GetLatestUserMessage(ChatCompletionRequest request)

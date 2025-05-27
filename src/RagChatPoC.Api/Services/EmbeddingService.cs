@@ -30,6 +30,7 @@ public class EmbeddingService(IConfiguration configuration, IHttpClientFactory h
         var response = await _httpClient.PostAsync("api/embeddings",
             new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json"));
 
+        response.EnsureSuccessStatusCode();
         var responseString = await response.Content.ReadAsStringAsync();
         var json = JsonDocument.Parse(responseString);
         return json.RootElement.GetProperty("embedding").ToString();

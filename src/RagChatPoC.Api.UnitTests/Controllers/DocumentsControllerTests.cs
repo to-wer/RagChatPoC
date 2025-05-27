@@ -34,7 +34,7 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(400, result.StatusCode);
-        Assert.Equal("Keine Datei hochgeladen", result.Value);
+        Assert.Equal("No file uploaded.", result.Value);
     }
 
     [Fact]
@@ -51,27 +51,9 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);
-        Assert.Equal("Datei indexiert", result.Value);
+        Assert.Equal("File indexed.", result.Value);
         mockFileProcessingService.Verify(s => s.ProcessTextAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
-
-// [Fact]
-// public async Task UploadFile_ShouldProcessPdfFile()
-// {
-//     var mockFileProcessingService = new Mock<IFileProcessingService>();
-//     var fileMock = new Mock<IFormFile>();
-//     fileMock.Setup(f => f.FileName).Returns("file.pdf");
-//     fileMock.Setup(f => f.Length).Returns(100);
-//     fileMock.Setup(f => f.OpenReadStream()).Returns(new MemoryStream(new byte[100]));
-//     var controller = new DocumentsController(mockFileProcessingService.Object, null);
-//
-//     var result = await controller.UploadFile(fileMock.Object) as OkObjectResult;
-//
-//     Assert.NotNull(result);
-//     Assert.Equal(200, result.StatusCode);
-//     Assert.Equal("Datei indexiert", result.Value);
-//     mockFileProcessingService.Verify(s => s.ProcessTextAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-// }
 
     [Fact]
     public async Task UploadZip_ShouldReturnBadRequest_WhenZipFileIsNull()
@@ -82,7 +64,7 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(400, result.StatusCode);
-        Assert.Equal("Keine Datei hochgeladen", result.Value);
+        Assert.Equal("No file uploaded.", result.Value);
     }
 
     [Fact]
@@ -96,6 +78,6 @@ public class DocumentsControllerTests
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);
-        Assert.Equal("Datei gelöscht", result.Value);
+        Assert.Equal("File deleted.", result.Value);
     }
 }

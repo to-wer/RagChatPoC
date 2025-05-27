@@ -11,13 +11,13 @@ public class IndexService(IEmbeddingService embeddingService,
     public async Task IndexChunksAsync(IEnumerable<TextChunk> chunks)
     {
         var textChunks = chunks as TextChunk[] ?? chunks.ToArray();
-        if(chunks == null || !textChunks.Any())
+        if(chunks == null || textChunks.Length == 0)
         {
             throw new ArgumentException("No chunks to index.");
         }
         
         // check if the file already exists and delete it
-        await documentChunkRepository.DeleteBySource(textChunks.First().Source);
+        await documentChunkRepository.DeleteBySource(textChunks[0].Source);
         
         foreach (var chunk in textChunks.Where(c => !string.IsNullOrWhiteSpace(c.Content)))
         {

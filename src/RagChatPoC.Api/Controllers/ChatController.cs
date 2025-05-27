@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using RagChatPoC.Api.Services.Interfaces;
@@ -9,8 +8,7 @@ namespace RagChatPoC.Api.Controllers;
 [ApiController]
 [Route("v{v:apiVersion}/[controller]")]
 [ApiVersion(1)]
-public class ChatController(IRagChatService ragChatService, 
-    ILogger<ChatController> logger) : ControllerBase
+public class ChatController(IRagChatService ragChatService) : ControllerBase
 {
  
     [MapToApiVersion(1)]
@@ -21,8 +19,8 @@ public class ChatController(IRagChatService ragChatService,
         {
             Response.StatusCode = 200;
             Response.ContentType = "text/event-stream";
-            Response.Headers["Cache-Control"] = "no-cache";
-            Response.Headers["X-Accel-Buffering"] = "no"; // Für NGINX (deaktiviert Pufferung)
+            Response.Headers.CacheControl = "no-cache";
+            Response.Headers["X-Accel-Buffering"] = "no";
 
             await foreach (var chunk in ragChatService.GetStreamingCompletion(request))
             {
@@ -30,7 +28,6 @@ public class ChatController(IRagChatService ragChatService,
                 await Response.Body.FlushAsync();
             }
 
-            // Optional: Abschluss-Event senden
             await Response.WriteAsync("data: [DONE]\n\n");
             await Response.Body.FlushAsync();
             return new EmptyResult();
