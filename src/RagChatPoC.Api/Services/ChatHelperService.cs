@@ -25,12 +25,8 @@ public class ChatHelperService(IEmbeddingService embeddingService,
         };
         newMessages.AddRange(request.Messages);
         
-        return Task.FromResult(new ExtendedChatCompletionRequest()
-        {
-            Messages = newMessages,
-            Model = request.Model,
-            Stream = request.Stream
-        });
+        request.Messages = newMessages;
+        return Task.FromResult(request);
     }
 
     public OpenAiChatMessage? GetLatestUserMessage(OpenAiChatCompletionRequest request)

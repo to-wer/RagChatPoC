@@ -11,8 +11,6 @@ public class RagChatService(
     IHttpClientFactory httpClientFactory,
     IChatHelperService chatHelperService) : IRagChatService
 {
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("OllamaClient");
-
     public async Task<ExtendedChatCompletionResponse> GetCompletion(ExtendedChatCompletionRequest request)
     {
         var latestUserMessage = chatHelperService.GetLatestUserMessage(request);
@@ -23,7 +21,28 @@ public class RagChatService(
 
         request = await chatHelperService.PrepareChatRequest(request, relevantChunks);
 
-        var response = await _httpClient.PostAsync("api/chat",
+        HttpClient httpClient;
+        string url;
+        switch (request.Provider?.ToLower())
+        {
+            case "ollama":
+                httpClient = httpClientFactory.CreateClient("OllamaClient");
+                url = "api/chat";
+                break;
+            case "cohere":
+                httpClient = httpClientFactory.CreateClient("CohereClient");
+                url = "v2/chat";
+                break;
+            default:
+                throw new ArgumentException($"Unsupported provider: {request.Provider}", nameof(request.Provider))
+                {
+                    HelpLink = null,
+                    HResult = 0,
+                    Source = null
+                };
+        }
+
+        var response = await httpClient.PostAsync(url,
             new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
 
         response.EnsureSuccessStatusCode();
@@ -82,7 +101,8 @@ public class RagChatService(
             Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
         };
 
-        using var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+        var httpClient = httpClientFactory.CreateClient("OllamaClient");
+        using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
         response.EnsureSuccessStatusCode();
 
         using var stream = await response.Content.ReadAsStreamAsync();

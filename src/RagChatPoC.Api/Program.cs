@@ -18,13 +18,20 @@ public class Program
         builder.Services.AddDbContext<RagDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        Console.WriteLine(builder.Configuration["OLLAMA_HOST_URL"]);
-        
         builder.Services.AddHttpClient("OllamaClient", client =>
         {
             client.BaseAddress = new Uri(builder.Configuration["OLLAMA_HOST_URL"] ?? string.Empty);
             client.Timeout = TimeSpan.FromMinutes(5); // adjust as needed
         });
+        if(!string.IsNullOrEmpty(builder.Configuration["COHERE_API_KEY"]))
+        {
+            builder.Services.AddHttpClient("CohereClient", client =>
+            {
+                client.BaseAddress = new Uri("https://api.cohere.ai/");
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {builder.Configuration["COHERE_API_KEY"]}");
+                client.Timeout = TimeSpan.FromMinutes(5); // adjust as needed
+            });
+        }
         
         builder.Services.AddScoped<IDocumentChunkRepository, DocumentChunkRepository>();
         builder.Services.AddScoped<IChatSessionRepository, ChatSessionRepository>();
