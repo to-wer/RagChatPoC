@@ -32,7 +32,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Database=ragchat;Username=ragchat;Password=ragchat;
-      - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_HOST_URL=http://host.docker.internal:11434
 
   web:
     build:
