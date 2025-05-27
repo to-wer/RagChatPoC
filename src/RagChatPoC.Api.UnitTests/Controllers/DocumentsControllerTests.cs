@@ -55,24 +55,6 @@ public class DocumentsControllerTests
         mockFileProcessingService.Verify(s => s.ProcessTextAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
-// [Fact]
-// public async Task UploadFile_ShouldProcessPdfFile()
-// {
-//     var mockFileProcessingService = new Mock<IFileProcessingService>();
-//     var fileMock = new Mock<IFormFile>();
-//     fileMock.Setup(f => f.FileName).Returns("file.pdf");
-//     fileMock.Setup(f => f.Length).Returns(100);
-//     fileMock.Setup(f => f.OpenReadStream()).Returns(new MemoryStream(new byte[100]));
-//     var controller = new DocumentsController(mockFileProcessingService.Object, null);
-//
-//     var result = await controller.UploadFile(fileMock.Object) as OkObjectResult;
-//
-//     Assert.NotNull(result);
-//     Assert.Equal(200, result.StatusCode);
-//     Assert.Equal("Datei indexiert", result.Value);
-//     mockFileProcessingService.Verify(s => s.ProcessTextAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-// }
-
     [Fact]
     public async Task UploadZip_ShouldReturnBadRequest_WhenZipFileIsNull()
     {
