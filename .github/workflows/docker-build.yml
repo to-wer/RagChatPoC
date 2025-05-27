@@ -34,10 +34,30 @@ jobs:
         with:
           dotnet-version: '9.x'
           
+      - name: Setup Java (für SonarQube)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Install SonarQube Cloud scanner
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          
       - name: Install dotnet-coverage
         # if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         run: |
           dotnet tool install --global dotnet-coverage
+          
+      - name: Start SonarQube Analysis
+        #if: github.ref == 'refs/heads/main'
+        run: |
+          dotnet-sonarscanner begin /k:"to-wer_ParkingSpotManager" \
+            /o:"torsten-werner" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+        working-directory: src
 
       - name: Restore dependencies
         run: dotnet restore
@@ -49,6 +69,10 @@ jobs:
 
       - name: Run tests
         run: dotnet-coverage collect "dotnet test --no-build --configuration Release" -f xml -o "coverage.xml"
+        working-directory: src
+        
+      - name: Complete SonarQube Analysis
+        run: dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         working-directory: src
         
       - name: Publish API
