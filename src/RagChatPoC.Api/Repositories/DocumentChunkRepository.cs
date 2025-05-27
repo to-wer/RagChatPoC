@@ -11,7 +11,7 @@ namespace RagChatPoC.Api.Repositories;
 public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepository
 {
     private const float ChunkScoreThreshold = 0.6f;
-    
+
     public async Task<IEnumerable<DocumentDto>> GetAllDocuments()
     {
         return await context.Chunks
@@ -35,6 +35,9 @@ public class DocumentChunkRepository(RagDbContext context) : IDocumentChunkRepos
     public Task<List<UsedContextChunk>> GetRelevantChunks(string questionEmbedding)
     {
         var queryEmbedding = JsonSerializer.Deserialize<float[]>(questionEmbedding);
+
+        if (queryEmbedding == null)
+            throw new ArgumentException("Invalid embedding format.");
 
         var relevantChunks = context.Chunks
             .AsEnumerable() // Vorübergehend in Memory, besser wäre PgVector oder vektorisierte Suche

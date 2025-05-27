@@ -1,6 +1,5 @@
 using System.IO.Compression;
 using Microsoft.AspNetCore.Mvc;
-using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Api.Utils;
 
@@ -21,7 +20,7 @@ public class DocumentsController(IFileProcessingService fileProcessingService,
     [HttpPost]
     public async Task<IActionResult> UploadFile(IFormFile file)
     {
-        if (file == null || file.Length == 0) return BadRequest("Keine Datei hochgeladen");
+        if (file.Length == 0) return BadRequest("No file uploaded.");
         
         await using var fileStream = file.OpenReadStream();
         
@@ -39,37 +38,36 @@ public class DocumentsController(IFileProcessingService fileProcessingService,
             await fileProcessingService.ProcessTextAsync(file.FileName, text);
         }
 
-        return Ok("Datei indexiert");
+        return Ok("File indexed.");
     }
     
     [HttpPost("upload-zip")]
     public async Task<IActionResult> UploadZip(IFormFile zipFile)
     {
-        if (zipFile == null || zipFile.Length == 0) return BadRequest("Keine Datei hochgeladen");
+        if (zipFile.Length == 0) return BadRequest("No file uploaded.");
 
-        using var stream = zipFile.OpenReadStream();
+        await using var stream = zipFile.OpenReadStream();
         using var archive = new ZipArchive(stream);
 
         foreach (var entry in archive.Entries)
         {
-            if (entry.FullName.EndsWith("/")) continue; // Verzeichnisse überspringen
+            if (entry.FullName.EndsWith('/')) continue;
 
-            using var entryStream = entry.Open();
+            await using var entryStream = entry.Open();
             using var reader = new StreamReader(entryStream);
 
             var text = await reader.ReadToEndAsync();
 
-            // Chunking + Embedding + Speicherung auslagern
             await fileProcessingService.ProcessTextAsync(entry.FullName, text);
         }
 
-        return Ok("Dateien indexiert");
+        return Ok("Files indexed.");
     }
     
     [HttpDelete("{fileName}")]
     public async Task<IActionResult> DeleteDocument(string fileName)
     {
         await documentService.DeleteDocument(fileName);
-        return Ok("Datei gelöscht");
+        return Ok("File deleted.");
     }
 }

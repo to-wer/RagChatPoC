@@ -24,7 +24,7 @@ public class ChatControllerTests
         var mockRagChatService = new Mock<IRagChatService>();
         mockRagChatService.Setup(s => s.GetCompletion(request)).ReturnsAsync(completionResult);
         var logger = new Mock<ILogger<ChatController>>();
-        var controller = new ChatController(mockRagChatService.Object, logger.Object);
+        var controller = new ChatController(mockRagChatService.Object);
 
         var result = await controller.PostChatCompletion(request) as OkObjectResult;
 
