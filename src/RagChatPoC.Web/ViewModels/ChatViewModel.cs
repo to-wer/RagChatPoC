@@ -36,7 +36,7 @@ public class ChatViewModel
 
         if (string.IsNullOrWhiteSpace(CurrentMessage)) return;
 
-        var userMessage = new ChatMessage
+        var userMessage = new OpenAiChatMessage
         {
             Role = "user",
             Content = CurrentMessage
@@ -50,7 +50,7 @@ public class ChatViewModel
             IsBusy = true;
 
             _logger.LogDebug("Using streaming for response");
-            var lastAssistant = new ChatMessage { Role = "assistant", Content = string.Empty };
+            var lastAssistant = new OpenAiChatMessage { Role = "assistant", Content = string.Empty };
             Messages.Add(new MessageWrapper(lastAssistant));
             await foreach (var chunk in StreamChatResponseAsync())
             {
@@ -64,14 +64,14 @@ public class ChatViewModel
         else
         {
             IsBusy = true;
-            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", new ChatCompletionRequest
+            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", new OpenAiChatCompletionRequest
             {
                 Model = Model,
                 Stream = false,
                 Messages = Messages.Select(m => m.Message).ToList()
             });
 
-            var data = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>();
+            var data = await response.Content.ReadFromJsonAsync<ExtendedChatCompletionResponse>();
             if (data?.Choices?.FirstOrDefault()?.Message is { } assistantMessage)
             {
                 Messages.Add(new MessageWrapper(assistantMessage, data.Context ?? []));
@@ -86,7 +86,7 @@ public class ChatViewModel
         var lastAssistant = Messages.LastOrDefault(m => m.Message.Role == "assistant");
         if (lastAssistant == null)
         {
-            lastAssistant = new MessageWrapper(new ChatMessage { Role = "assistant", Content = chunk });
+            lastAssistant = new MessageWrapper(new OpenAiChatMessage { Role = "assistant", Content = chunk });
             // Messages.Add(lastAssistant);
             Messages.Add(lastAssistant);
         }
@@ -100,7 +100,7 @@ public class ChatViewModel
 
     private async IAsyncEnumerable<string> StreamChatResponseAsync()
     {
-        var request = new ChatCompletionRequest
+        var request = new OpenAiChatCompletionRequest
         {
             Model = Model,
             Stream = true,
@@ -173,24 +173,27 @@ public class ContextWrapper
 
 public class MessageWrapper
 {
-    public ChatMessage Message { get; set; }
+    public OpenAiChatMessage Message { get; set; }
     public List<UsedContextChunk> UsedContextChunks { get; set; }
 
     public MessageWrapper()
     {
-        Message = new ChatMessage();
+        Message = new OpenAiChatMessage()
+        {
+            Role = "assistant"
+        };
         UsedContextChunks = [];
     }
 
-    public MessageWrapper(ChatMessage chatMessage)
+    public MessageWrapper(OpenAiChatMessage openAiChatMessage)
     {
-        Message = chatMessage;
+        Message = openAiChatMessage;
         UsedContextChunks = [];
     }
 
-    public MessageWrapper(ChatMessage chatMessage, List<UsedContextChunk> usedContextChunks)
+    public MessageWrapper(OpenAiChatMessage openAiChatMessage, List<UsedContextChunk> usedContextChunks)
     {
-        Message = chatMessage;
+        Message = openAiChatMessage;
         UsedContextChunks = usedContextChunks;
     }
 }

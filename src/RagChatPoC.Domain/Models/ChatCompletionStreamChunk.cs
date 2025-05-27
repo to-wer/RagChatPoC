@@ -13,7 +13,7 @@ public class ChatCompletionStreamChunk
     public class StreamChoice
     {
         [JsonPropertyName("index")] public int? Index { get; set; }
-        [JsonPropertyName("delta")] public ChatMessage? Delta { get; set; }
+        [JsonPropertyName("delta")] public OpenAiChatMessage? Delta { get; set; }
         [JsonPropertyName("finish_reason")] public string? FinishReason { get; set; }
     }
 }

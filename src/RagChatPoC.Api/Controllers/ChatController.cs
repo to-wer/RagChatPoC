@@ -13,10 +13,13 @@ public class ChatController(IRagChatService ragChatService) : ControllerBase
  
     [MapToApiVersion(1)]
     [HttpPost("completions")]
-    public async Task<IActionResult> PostChatCompletion([FromBody] ChatCompletionRequest request)
+    public async Task<IActionResult> PostChatCompletion([FromBody] ExtendedChatCompletionRequest request)
     {
+        // TODO: check provided model is supported
+        
         if (request.Stream)
         {
+            // TODO: implement support for different models and providers later.
             Response.StatusCode = 200;
             Response.ContentType = "text/event-stream";
             Response.Headers.CacheControl = "no-cache";

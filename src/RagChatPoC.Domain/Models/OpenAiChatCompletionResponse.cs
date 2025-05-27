@@ -1,12 +1,11 @@
 namespace RagChatPoC.Domain.Models;
 
-public class ChatCompletionResponse
+public class OpenAiChatCompletionResponse
 {
     public string Id { get; set; } = $"chatcmpl-{Guid.NewGuid()}";
     public string Object { get; set; } = "chat.completion";
     public long Created { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-    public string Model { get; set; } = "local-rag";
-    public List<ChatChoice> Choices { get; set; } = new();
-    
-    public List<UsedContextChunk>? Context { get; set; }
+    public string? Model { get; set; }
+    public List<OpenAiChatChoice> Choices { get; set; } = [];
+    public OpenAiUsage? Usage { get; set; }
 }

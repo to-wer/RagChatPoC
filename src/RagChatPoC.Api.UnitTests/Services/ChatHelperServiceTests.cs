@@ -35,9 +35,9 @@ public class ChatHelperServiceTests
                 SourceFile = "File2.pdf"
             }
         };
-        var request = new ChatCompletionRequest
+        var request = new ExtendedChatCompletionRequest
         {
-            Messages = [new ChatMessage { Role = "user", Content = "User question" }],
+            Messages = [new OpenAiChatMessage { Role = "user", Content = "User question" }],
             Model = "gpt-4",
             Stream = true
         };
@@ -54,13 +54,13 @@ public class ChatHelperServiceTests
     [Fact]
     public void GetLatestUserMessage_ShouldReturnLastUserMessage()
     {
-        var request = new ChatCompletionRequest
+        var request = new OpenAiChatCompletionRequest
         {
             Messages =
             [
-                new ChatMessage { Role = "system", Content = "System message" },
-                new ChatMessage { Role = "user", Content = "First user message" },
-                new ChatMessage { Role = "user", Content = "Latest user message" }
+                new OpenAiChatMessage { Role = "system", Content = "System message" },
+                new OpenAiChatMessage { Role = "user", Content = "First user message" },
+                new OpenAiChatMessage { Role = "user", Content = "Latest user message" }
             ]
         };
 
@@ -74,12 +74,12 @@ public class ChatHelperServiceTests
     [Fact]
     public void GetLatestUserMessage_ShouldReturnNull_WhenNoUserMessagesExist()
     {
-        var request = new ChatCompletionRequest
+        var request = new OpenAiChatCompletionRequest
         {
             Messages =
             [
-                new ChatMessage { Role = "system", Content = "System message" },
-                new ChatMessage { Role = "assistant", Content = "Assistant message" }
+                new OpenAiChatMessage { Role = "system", Content = "System message" },
+                new OpenAiChatMessage { Role = "assistant", Content = "Assistant message" }
             ]
         };
 
@@ -91,7 +91,7 @@ public class ChatHelperServiceTests
     [Fact]
     public async Task GetRelevantChunks_ShouldReturnChunksBasedOnQuestionEmbedding()
     {
-        var chatMessage = new ChatMessage { Content = "User question" };
+        var chatMessage = new OpenAiChatMessage { Content = "User question", Role = "user" };
         var embedding = new[] { 0.1f, 0.2f, 0.3f };
         var embeddingJson = JsonSerializer.Serialize(embedding);
         var relevantChunks = new List<UsedContextChunk>

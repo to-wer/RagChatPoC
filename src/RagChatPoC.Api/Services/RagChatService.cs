@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using RagChatPoC.Api.Models;
-using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
 
@@ -14,11 +13,11 @@ public class RagChatService(
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("OllamaClient");
 
-    public async Task<ChatCompletionResponse> GetCompletion(ChatCompletionRequest request)
+    public async Task<ExtendedChatCompletionResponse> GetCompletion(ExtendedChatCompletionRequest request)
     {
         var latestUserMessage = chatHelperService.GetLatestUserMessage(request);
         if (latestUserMessage == null)
-            return new ChatCompletionResponse();
+            return new ExtendedChatCompletionResponse();
 
         var relevantChunks = await chatHelperService.GetRelevantChunks(latestUserMessage);
 
@@ -31,14 +30,14 @@ public class RagChatService(
 
         var ollamaChatResponse = await response.Content.ReadFromJsonAsync<OllamaChatResponse>();
 
-        return new ChatCompletionResponse
+        return new ExtendedChatCompletionResponse()
         {
             Choices =
             [
-                new ChatChoice
+                new OpenAiChatChoice
                 {
                     Index = 0,
-                    Message = new ChatMessage
+                    Message = new OpenAiChatMessage
                     {
                         Role = "assistant",
                         Content = ollamaChatResponse?.Message.Content ?? string.Empty
@@ -56,7 +55,7 @@ public class RagChatService(
         };
     }
 
-    public async IAsyncEnumerable<string> GetStreamingCompletion(ChatCompletionRequest request)
+    public async IAsyncEnumerable<string> GetStreamingCompletion(ExtendedChatCompletionRequest request)
     {
         var latestUserMessage = chatHelperService.GetLatestUserMessage(request);
         if (latestUserMessage == null)
@@ -117,7 +116,11 @@ public class RagChatService(
                     {
                         new ChatCompletionStreamChunk.StreamChoice()
                         {
-                            Delta = new ChatMessage() { Content = content},
+                            Delta = new OpenAiChatMessage
+                            {
+                                Content = content,
+                                Role = "assistant"
+                            },
                             Index = 0,
                             FinishReason = (string?)null
                         }

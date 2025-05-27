@@ -1,8 +1,8 @@
 namespace RagChatPoC.Domain.Models;
 
-public class ChatChoice
+public class OpenAiChatChoice
 {
     public int Index { get; set; }
-    public ChatMessage Message { get; set; } = null!;
+    public required OpenAiChatMessage Message { get; set; }
     public string FinishReason { get; set; } = "stop";
 }

@@ -15,12 +15,21 @@ public class ChatControllerTests
     public async Task PostChatCompletion_WhenStreamFalse_ReturnsOkWithResponse()
     {
         // Arrange
-        var request = new ChatCompletionRequest { Stream = false };
-        var expectedResponse = new ChatCompletionResponse
+        var request = new ExtendedChatCompletionRequest { Stream = false };
+        var expectedResponse = new ExtendedChatCompletionResponse
         {
             Id = "chatcmpl-123",
             Model = "test-model",
-            Choices = new List<ChatChoice> { new ChatChoice() }
+            Choices = new List<OpenAiChatChoice>
+            {
+                new OpenAiChatChoice
+                {
+                    Message = new OpenAiChatMessage
+                    {
+                        Role = "system"
+                    }
+                }
+            }
         };
 
         _mockRagChatService
@@ -34,7 +43,7 @@ public class ChatControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var actual = Assert.IsType<ChatCompletionResponse>(okResult.Value);
+        var actual = Assert.IsType<ExtendedChatCompletionResponse>(okResult.Value);
         Assert.Equal("chatcmpl-123", actual.Id);
         Assert.Equal("test-model", actual.Model);
         Assert.Single(actual.Choices);
@@ -44,7 +53,7 @@ public class ChatControllerTests
     public async Task PostChatCompletion_WhenStreamTrue_WritesToResponse()
     {
         // Arrange
-        var request = new ChatCompletionRequest { Stream = true };
+        var request = new ExtendedChatCompletionRequest { Stream = true };
         var chunks = new List<string> { "chunk 1", "chunk 2" };
 
         _mockRagChatService
