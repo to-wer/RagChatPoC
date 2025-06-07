@@ -3,6 +3,7 @@ using System.Text.Json;
 using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
+using RagChatPoC.Domain.Models.Cohere;
 
 namespace RagChatPoC.Api.Services;
 
@@ -23,16 +24,14 @@ public class RagChatService(
 
         HttpClient httpClient;
         string url;
-        switch (request.Provider?.ToLower())
+        switch (request.Provider.ToLower())
         {
             case "ollama":
                 httpClient = httpClientFactory.CreateClient("OllamaClient");
                 url = "api/chat";
                 break;
             case "cohere":
-                httpClient = httpClientFactory.CreateClient("CohereClient");
-                url = "v2/chat";
-                break;
+                return await GetCompletionFromCohere(request);
             default:
                 throw new ArgumentException($"Unsupported provider: {request.Provider}", nameof(request.Provider))
                 {
@@ -41,7 +40,7 @@ public class RagChatService(
                     Source = null
                 };
         }
-
+        
         var response = await httpClient.PostAsync(url,
             new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
 
@@ -96,10 +95,8 @@ public class RagChatService(
         request = await chatHelperService.PrepareChatRequest(request, relevantChunks);
 
         var requestJson = JsonSerializer.Serialize(request);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{configuration["OLLAMA_HOST"]}/api/chat")
-        {
-            Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
-        };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{configuration["OLLAMA_HOST"]}/api/chat");
+        httpRequest.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
         var httpClient = httpClientFactory.CreateClient("OllamaClient");
         using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
@@ -147,5 +144,53 @@ public class RagChatService(
                     }.ToList()
                 });
         }
+    }
+    
+    private async Task<ExtendedChatCompletionResponse> GetCompletionFromCohere(ExtendedChatCompletionRequest request)
+    {
+        // Implement Cohere specific logic here
+        var httpClient = httpClientFactory.CreateClient("CohereClient");
+        var url = "v2/chat";
+
+        var cohereRequest = new CohereChatCompletionRequest()
+        {
+            Model = request.Model,
+            Messages = request.Messages
+        };
+        
+        var response = await httpClient.PostAsync(url,
+            new StringContent(JsonSerializer.Serialize(cohereRequest), Encoding.UTF8, "application/json"));
+        
+        response.EnsureSuccessStatusCode();
+        
+        var cohereResponse = await response.Content.ReadFromJsonAsync<CohereChatCompletionResponse>();
+        
+        if (cohereResponse == null)
+            throw new InvalidOperationException("Cohere response is null");
+
+        return new ExtendedChatCompletionResponse()
+        {
+            Id = cohereResponse.Id,
+            Model = request.Model,
+            Choices =
+            [
+                new OpenAiChatChoice
+                {
+                    Index = 0,
+                    Message = new OpenAiChatMessage
+                    {
+                        Role = "assistant",
+                        Content = cohereResponse.Message.Content.First().Text
+                    },
+                    FinishReason = cohereResponse.FinishReason
+                }
+            ],
+            Usage = new OpenAiUsage
+            {
+                PromptTokens = cohereResponse.Usage.Tokens.InputTokens,
+                CompletionTokens = cohereResponse.Usage.Tokens.OutputTokens,
+                TotalTokens = cohereResponse.Usage.Tokens.InputTokens + cohereResponse.Usage.Tokens.OutputTokens
+            }
+        };
     }
 }
