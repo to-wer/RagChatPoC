@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
+using RagChatPoC.Domain.Models.RagChat;
 
 namespace RagChatPoC.Api.Controllers;
 

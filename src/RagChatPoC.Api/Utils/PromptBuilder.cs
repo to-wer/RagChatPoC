@@ -1,5 +1,6 @@
 using System.Text;
 using RagChatPoC.Api.Data;
+using RagChatPoC.Domain.Models;
 
 namespace RagChatPoC.Api.Utils;
 
@@ -33,7 +34,7 @@ public static class PromptBuilder
     /// <param name="chunks">Relevant document chunks for the context.</param>
     /// <param name="newQuestion">The user's new question.</param>
     /// <returns>A formatted prompt string.</returns>
-    public static string Build(List<ChatMessage> history, List<DocumentChunk> chunks, string newQuestion)
+    public static string Build(List<OpenAiChatMessage> history, List<DocumentChunk> chunks, string newQuestion)
     {
         var sb = new StringBuilder(512); // Pre-allocate capacity for better performance
 
@@ -43,7 +44,7 @@ public static class PromptBuilder
         sb.AppendLine("Chat history:");
         foreach (var message in history)
         {
-            sb.AppendLine($"{(message.IsUser ? "User" : "Assistant")}: {message.Content}");
+            sb.AppendLine($"{(message.Role)}: {message.Content}");
         }
 
         sb.AppendLine();

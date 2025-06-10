@@ -1,5 +1,6 @@
 using RagChatPoC.Api.Data;
 using RagChatPoC.Domain.Models;
+using RagChatPoC.Domain.Models.RagChat;
 
 namespace RagChatPoC.Api.Services.Interfaces;
 

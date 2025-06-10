@@ -1,4 +1,4 @@
-namespace RagChatPoC.Domain.Models;
+namespace RagChatPoC.Domain.Models.RagChat;
 
 public class ExtendedChatCompletionResponse : OpenAiChatCompletionResponse
 {

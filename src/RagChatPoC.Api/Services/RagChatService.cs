@@ -4,6 +4,7 @@ using RagChatPoC.Api.Models;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
 using RagChatPoC.Domain.Models.Cohere;
+using RagChatPoC.Domain.Models.RagChat;
 
 namespace RagChatPoC.Api.Services;
 

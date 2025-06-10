@@ -4,6 +4,7 @@ using RagChatPoC.Api.Repositories;
 using RagChatPoC.Api.Services;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
+using RagChatPoC.Domain.Models.RagChat;
 
 namespace RagChatPoC.Api.UnitTests.Services;
 

@@ -4,6 +4,7 @@ using Moq;
 using RagChatPoC.Api.Controllers;
 using RagChatPoC.Api.Services.Interfaces;
 using RagChatPoC.Domain.Models;
+using RagChatPoC.Domain.Models.RagChat;
 
 namespace RagChatPoC.Api.UnitTests.Controllers;
 

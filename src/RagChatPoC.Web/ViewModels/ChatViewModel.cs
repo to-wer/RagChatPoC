@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RagChatPoC.Domain.Models;
+using RagChatPoC.Domain.Models.RagChat;
 
 namespace RagChatPoC.Web.ViewModels;
 
